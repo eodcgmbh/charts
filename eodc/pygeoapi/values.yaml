@@ -100,9 +100,10 @@ postgresql:
     # Set user and password config.
     postgresql:
       auth:
-        username: "eodc"
-        database: "pygeodb"
+        username: ""
+        database: ""
+        # Value created by the helm chart
         existingSecret: "postgres-credentials"
         secretKeys:
-          adminPasswordKey: "postgresPassword"
-          userPasswordKey: "userPassword"
+          adminPasswordKey: ""
+          userPasswordKey: ""
