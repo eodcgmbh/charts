@@ -1,0 +1,69 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "pygeoapi.fullname" . }}
+  labels:
+    {{- include "pygeoapi.labels" . | nindent 4 }}
+spec:
+  {{- if not .Values.pygeoapi.autoscaling.enabled }}
+  replicas: {{ .Values.pygeoapi.replicaCount }}
+  {{- end }}
+  selector:
+    matchLabels:
+      {{- include "pygeoapi.selectorLabels" . | nindent 6 }}
+  template:
+    metadata:
+      {{- with .Values.pygeoapi.server.podAnnotations }}
+      annotations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      labels:
+        {{- include "pygeoapi.selectorLabels" . | nindent 8 }}
+    spec:
+      {{- with .Values.pygeoapi.server.imagePullSecrets }}
+      imagePullSecrets:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      serviceAccountName: {{ include "pygeoapi.serviceAccountName" . }}
+      securityContext:
+        {{- toYaml .Values.pygeoapi.server.podSecurityContext | nindent 8 }}
+      containers:
+        - name: {{ .Chart.Name }}-server
+          securityContext:
+            {{- toYaml .Values.pygeoapi.server.securityContext | nindent 12 }}
+          image: "{{ .Values.pygeoapi.server.image.repository }}:{{ .Values.pygeoapi.server.image.tag | default .Chart.AppVersion }}"
+          imagePullPolicy: {{ .Values.pygeoapi.server.image.pullPolicy }}
+          volumeMounts:
+          - name: config-volume
+            mountPath: /etc/config
+          command: ["/bin/sh", "-c", "cp /etc/config/local.config.yml /pygeoapi/local.config.yml && /entrypoint.sh" ]
+          ports:
+            - name: http
+              containerPort: 80
+              protocol: TCP
+          livenessProbe:
+            httpGet:
+              path: /
+              port: http
+          readinessProbe:
+            httpGet:
+              path: /
+              port: http
+          resources:
+            {{- toYaml .Values.pygeoapi.server.resources | nindent 12 }}
+      {{- with .Values.pygeoapi.server.nodeSelector }}
+      nodeSelector:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.pygeoapi.server.affinity }}
+      affinity:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.pygeoapi.server.tolerations }}
+      tolerations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      volumes:
+      - name: config-volume
+        configMap:
+          name: pygeoapi-configmap
