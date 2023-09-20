@@ -27,6 +27,21 @@ spec:
       serviceAccountName: {{ include "pygeoapi.serviceAccountName" . }}
       securityContext:
         {{- toYaml .Values.pygeoapi.server.podSecurityContext | nindent 8 }}
+      initContainers:
+        - name: init-envsubst
+          env:
+          - name: POSTGRES_PASSWORD
+            valueFrom:
+              secretKeyRef:
+                name: {{ .Values.pygeoapi.secret.name }}
+                key: {{ .Values.pygeoapi.secret.key }}
+          image: blockstack/envsubst:latest
+          volumeMounts:
+          - name: shared-volume
+            mountPath: /shared/config
+          - name: config-volume
+            mountPath: /etc/config   # Mount path for the shared volume
+          command: ["/bin/sh", "-c", "envsubst < /etc/config/local.config.yml > /shared/config/updated.config.yml"]
       containers:
         - name: {{ .Chart.Name }}-server
           securityContext:
@@ -34,9 +49,9 @@ spec:
           image: "{{ .Values.pygeoapi.server.image.repository }}:{{ .Values.pygeoapi.server.image.tag | default .Chart.AppVersion }}"
           imagePullPolicy: {{ .Values.pygeoapi.server.image.pullPolicy }}
           volumeMounts:
-          - name: config-volume
+          - name: shared-volume
             mountPath: /etc/config
-          command: ["/bin/sh", "-c", "cp /etc/config/local.config.yml /pygeoapi/local.config.yml && /entrypoint.sh" ]
+          command: ["/bin/sh", "-c", "cp /etc/config/updated.config.yml /pygeoapi/local.config.yml && cat  /pygeoapi/local.config.yml && /entrypoint.sh" ]
           ports:
             - name: http
               containerPort: 80
@@ -67,3 +82,17 @@ spec:
       - name: config-volume
         configMap:
           name: pygeoapi-configmap
+      - name: shared-volume
+        persistentVolumeClaim:
+          claimName: shared-volume-claim
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: shared-volume-claim
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 10Mi
