@@ -24,6 +24,8 @@ pygeoapi:
 
   secret:
     create: "true"
+    name: "postgres-credentials"
+    key: "userPassword"
 
   service:
     type: ClusterIP
@@ -100,10 +102,12 @@ postgresql:
     # Set user and password config.
     postgresql:
       auth:
-        username: ""
-        database: ""
+        username: "eodc"
+        database: "pygeodb"
         # Value created by the helm chart
         existingSecret: "postgres-credentials"
-        secretKeys:
-          adminPasswordKey: ""
-          userPasswordKey: ""
+
+  auth:
+    secretKeys:
+      adminPasswordKey: postgresPassword
+      userPasswordKey: userPassword
