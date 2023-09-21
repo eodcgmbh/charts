@@ -22,10 +22,12 @@ pygeoapi:
     config:
       data: ""
 
+  # This is a secret that is expected to already exist on the cluster.
+  # A new secret will be created and used for the api deployment to connect to postgres.
   secret:
-    create: "true"
-    name: "postgres-credentials"
-    key: "userPassword"
+    name: ""
+    namespace: ""
+    key: ""
 
   service:
     type: ClusterIP
@@ -93,21 +95,3 @@ pygeoapi:
   tolerations: []
 
   affinity: {}
-
-postgresql:
-
-  global:
-    storageClass: ""
-
-    # Set user and password config.
-    postgresql:
-      auth:
-        username: "eodc"
-        database: "pygeodb"
-        # Value created by the helm chart
-        existingSecret: "postgres-credentials"
-
-  auth:
-    secretKeys:
-      adminPasswordKey: postgresPassword
-      userPasswordKey: userPassword
