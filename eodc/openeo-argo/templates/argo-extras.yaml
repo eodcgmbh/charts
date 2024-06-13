@@ -1,0 +1,71 @@
+{{- if .Values.argoworkflows.enabled }}
+kind: Role
+apiVersion: rbac.authorization.k8s.io/v1
+metadata:
+  name: openeo-access
+rules:
+  - apiGroups: [""]
+    resources: ["secrets"]
+    resourceNames:
+      [
+        "openeo-access",
+      ]
+    verbs: ["get", "delete", "patch"]
+---
+kind: Role
+apiVersion: rbac.authorization.k8s.io/v1
+metadata:
+  name: openeo-argo-access-role
+rules:
+  - apiGroups: ["argoproj.io"]
+    resources: ["workflows"]
+    verbs: ["list", "update"]
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: openeo-argo-access-sa
+  labels:
+    {{- include "openeo-argo.labels" . | nindent 4 }}
+automountServiceAccountToken: true
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: openeo-argo-access-rb
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: Role
+  name: openeo-argo-access-role
+subjects:
+- kind: ServiceAccount
+  name: openeo-argo-access-sa
+---
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: openeo-argo-access-init
+  annotations:
+    "helm.sh/hook-delete-policy": "hook-succeeded"
+spec:
+  template:
+    spec:
+      restartPolicy: Never
+      serviceAccountName: openeo-argo-access-sa
+      containers:
+      - name: openeo-argo-secret-fixer
+        imagePullPolicy: IfNotPresent
+        image: bitnami/kubectl:latest
+        command: ["sh", "-xc"]
+        args:
+          - |
+            kubectl apply -f - <<EOF
+            apiVersion: v1
+            kind: Secret
+            metadata:
+              name: openeo-argo-access-sa.service-account-token
+              annotations:
+                kubernetes.io/service-account.name: openeo-argo-access-sa
+            type: kubernetes.io/service-account-token
+            EOF
+{{- end }}
