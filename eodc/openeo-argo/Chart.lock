@@ -1,0 +1,12 @@
+dependencies:
+- name: redis
+  repository: https://charts.bitnami.com/bitnami
+  version: 19.5.2
+- name: postgresql
+  repository: https://charts.bitnami.com/bitnami
+  version: 15.5.1
+- name: argo-workflows
+  repository: https://argoproj.github.io/argo-helm
+  version: 0.32.0
+digest: sha256:839cdee4da2625f7162f4f00f07c2a00933a156a55d9ca428629f8bc1aa8dc7d
+generated: "2024-06-07T14:24:07.241928753+02:00"
