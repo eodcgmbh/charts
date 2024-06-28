@@ -50,7 +50,12 @@ spec:
       serviceAccountName: {{ include "openeo-argo.serviceAccountName" . }}
       securityContext:
         {{- toYaml .Values.podSecurityContext | nindent 8 }}
-      
+      volumes:
+      - name: workspace-mount
+        persistentVolumeClaim:
+          claimName: openeo-workspace
+
+
       initContainers:
         - name: {{ .Chart.Name }}-wait-on-postgres
           image: bitnami/kubectl:latest
@@ -60,7 +65,7 @@ spec:
           image: bitnami/kubectl:latest
           command: ['sh', '-c', 'until kubectl get po openeo-redis-master-0 -n {{ .Release.Namespace }} -o jsonpath="{.status.containerStatuses[0].ready}" | grep -q "true"; do echo "Waiting for redis..."; sleep 5; done']
 
-        - name: {{ .Chart.Name }}-db-revisoin
+        - name: {{ .Chart.Name }}-db-revision
           image: "{{ .Values.image.repository }}:{{ .Values.image.tag | default .Chart.AppVersion }}"
           imagePullPolicy: {{ .Values.image.pullPolicy }}
           env:
@@ -81,7 +86,7 @@ spec:
                   key: postgres-password
           command: ["sh", "-xc"]
           args:
-            - python -m openeo_argoworkflows.upgrade
+            - python -m openeo_argoworkflows_api.upgrade
 
       containers:
         - name: {{ .Chart.Name }}
@@ -100,6 +105,8 @@ spec:
               value: "{{ .Values.global.env.apiDescription }}"
             - name: OPENEO_WORKSPACE_ROOT
               value: "{{ .Values.global.env.workspaceRoot }}"
+            - name: OPENEO_EXECUTOR_IMAGE
+              value: "{{ .Values.global.env.executorImage }}"
             - name: OIDC_URL
               value: "{{ .Values.global.env.oidcUrl }}"
             - name: OIDC_ORGANISATION
@@ -136,7 +143,11 @@ spec:
                 secretKeyRef:
                   name: "openeo-postgresql"
                   key: postgres-password
-        
+          volumeMounts:
+            - name: workspace-mount
+              mountPath: "{{ .Values.global.env.workspaceRoot }}"
+
+
         - name: {{ .Chart.Name }}-queue-worker
           securityContext:
             {{- toYaml .Values.securityContext | nindent 12 }}
@@ -144,7 +155,7 @@ spec:
           imagePullPolicy: {{ .Values.image.pullPolicy }}
           command: ["sh", "-xc"]
           args:
-            - python -m openeo_argoworkflows.worker
+            - python -m openeo_argoworkflows_api.worker
           env:
             - name: ALEMBIC_DIR
               value: "{{ .Values.global.env.alembicDir }}"
@@ -154,6 +165,10 @@ spec:
               value: "{{ .Values.global.env.apiTitle }}"
             - name: API_DESCRIPTION
               value: "{{ .Values.global.env.apiDescription }}"
+            - name: OPENEO_EXECUTOR_IMAGE
+              value: "{{ .Values.global.env.executorImage }}"
+            - name: OPENEO_WORKSPACE_ROOT
+              value: "{{ .Values.global.env.workspaceRoot }}"
             - name: OIDC_URL
               value: "{{ .Values.global.env.oidcUrl }}"
             - name: OIDC_ORGANISATION
