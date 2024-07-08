@@ -1,6 +1,6 @@
 apiVersion: v2
 name: dashboards
-description: A Helm chart for Kubernetes
+description: Basic helm chart for K8s for making the deployment of dashboards at EODC easier.
 
 # A chart can be either an 'application' or a 'library' chart.
 #
