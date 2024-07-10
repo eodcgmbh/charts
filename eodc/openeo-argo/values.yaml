@@ -4,14 +4,14 @@
 global:
   env:
     alembicDir: "/opt/openeo_argoworkflows_api/psql"
-    apiDns: "localhost"
+    apiDns: ""
     apiTLS: false
     apiTitle: "OpenEO ArgoWorkflows"
     apiDescription: "A K8S deployment of the openeo api for argoworkflows."
-    oidcUrl: "https://aai.egi.eu/auth/realms/egi"
+    oidcUrl: ""
     odicOrganisation: "egi"
-    oidcRoles: ["developer"]
-    stacCatalogueUrl: "https://stac.eodc.eu/api/v1"
+    oidcRoles: [""]
+    stacCatalogueUrl: ""
     workspaceRoot: "/user_workspaces"
     executorImage: "ghcr.io/eodcgmbh/openeo-argoworkflows:executor-2024.6.2"
 
