@@ -134,6 +134,8 @@ spec:
               value: "{{ .Values.global.env.oidcRoles }}"
             - name: STAC_API_URL
               value: "{{ .Values.global.env.stacCatalogueUrl }}"
+            - name: DASK_GATEWAY_SERVER
+              value: "http://traefik-openeo-dask-gateway.{{ .Release.Namespace }}.svc.cluster.local:80"
             - name: ARGO_WORKFLOWS_SERVER
               value: "http://openeo-argo-workflows-server.{{ .Release.Namespace }}.svc.cluster.local:2746"
             - name: ARGO_WORKFLOWS_NAMESPACE
