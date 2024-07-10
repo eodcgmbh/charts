@@ -15,7 +15,6 @@ global:
     workspaceRoot: "/user_workspaces"
     executorImage: "ghcr.io/eodcgmbh/openeo-argoworkflows:executor-2024.6.2"
 
-
 replicaCount: 1
 
 labels: {}
@@ -166,3 +165,56 @@ redis:
   replica:
   
     replicaCount: 1
+
+dask-gateway:
+
+  enabled: true
+
+  # Do not change this configuration for dask gateway when enabling dask gateway.
+  # For an existing dask gateway installation, the user-workspace volume would need to be available
+  # to the worker pods, and the extra cluster options need to be present.
+  gateway:
+
+    backend:
+    
+      worker:
+        
+        extraPodConfig: 
+          volumes:
+            - name: user-workspace
+              persistentVolumeClaim:
+                claimName: openeo-workspace
+
+        extraContainerConfig: 
+          volumeMounts:
+            - name: user-workspace
+              mountPath: "/user_workspaces"
+
+
+    extraConfig: 
+      optionHandler: |
+        from dask_gateway_server.options import Options, Integer, Float, String
+        def option_handler(options):
+          return {
+              "WORKER_CORES": options.WORKER_CORES,
+              "WORKER_MEMORY": "%fG" % options.WORKER_MEMORY,
+              "scheduler_extra_pod_labels": {'OPENEO_USER_ID': options.OPENEO_USER_ID, 'OPENEO_JOB_ID': options.OPENEO_JOB_ID },
+              "worker_extra_pod_labels": {'OPENEO_USER_ID': options.OPENEO_USER_ID, 'OPENEO_JOB_ID': options.OPENEO_JOB_ID },
+              "CLUSTER_IDLE_TIMEOUT": options.CLUSTER_IDLE_TIMEOUT,
+              "IMAGE": options.IMAGE
+          }
+
+        c.Backend.cluster_options = Options(
+            Integer("WORKER_CORES", 4, min=1, max=12, label="Worker Cores"),
+            Float("WORKER_MEMORY", 12, min=1, max=24, label="Worker Memory (GiB)"),
+            String("OPENEO_USER_ID", "Unassigned", label="User identifier"),
+            String("OPENEO_JOB_ID", "Unassigned", label="Job identifier"),
+            Float("CLUSTER_IDLE_TIMEOUT", 3600, label="Idle Timeout"),
+            String("IMAGE", "ghcr.io/dask/dask-gateway:2024.1.0", label="Worker image"),
+            handler=option_handler,
+        )
+
+  traefik:
+
+    service:
+      type: ClusterIP
