@@ -4,16 +4,16 @@
 global:
   env:
     alembicDir: "/opt/openeo_argoworkflows_api/psql"
-    apiDns: ""
-    apiTLS: false
+    apiDns: localhost
     apiTitle: "OpenEO ArgoWorkflows"
+    apiTLS: false
     apiDescription: "A K8S deployment of the openeo api for argoworkflows."
-    oidcUrl: ""
+    oidcUrl: "https://aai.egi.eu/auth/realms/egi"
     odicOrganisation: "egi"
-    oidcRoles: [""]
-    stacCatalogueUrl: ""
+    oidcRoles: ["developer"]
+    stacCatalogueUrl: "https://stac.eodc.eu/api/v1"
     workspaceRoot: "/user_workspaces"
-    executorImage: "ghcr.io/eodcgmbh/openeo-argoworkflows:executor-2024.6.2"
+    executorImage: "ghcr.io/eodcgmbh/openeo-argoworkflows:executor-2024.7.1"
 
 replicaCount: 1
 
@@ -23,7 +23,7 @@ image:
   repository: ghcr.io/eodcgmbh/openeo-argoworkflows
   pullPolicy: IfNotPresent
   # Overrides the image tag whose default is the chart appVersion.
-  tag: "api-2024.7.1"
+  tag: "api-2024.7.2"
 
 imagePullSecrets: []
 nameOverride: ""
@@ -196,12 +196,12 @@ dask-gateway:
         from dask_gateway_server.options import Options, Integer, Float, String
         def option_handler(options):
           return {
-              "WORKER_CORES": options.WORKER_CORES,
-              "WORKER_MEMORY": "%fG" % options.WORKER_MEMORY,
+              "worker_cores": options.WORKER_CORES,
+              "worker_memory": "%fG" % options.WORKER_MEMORY,
               "scheduler_extra_pod_labels": {'OPENEO_USER_ID': options.OPENEO_USER_ID, 'OPENEO_JOB_ID': options.OPENEO_JOB_ID },
               "worker_extra_pod_labels": {'OPENEO_USER_ID': options.OPENEO_USER_ID, 'OPENEO_JOB_ID': options.OPENEO_JOB_ID },
-              "CLUSTER_IDLE_TIMEOUT": options.CLUSTER_IDLE_TIMEOUT,
-              "IMAGE": options.IMAGE
+              "idle_timeout": options.CLUSTER_IDLE_TIMEOUT,
+              "image": options.IMAGE
           }
 
         c.Backend.cluster_options = Options(
