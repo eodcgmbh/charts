@@ -98,7 +98,7 @@ spec:
                   key: password
           command: ["sh", "-xc"]
           args:
-            - printenv && python -m openeo_argoworkflows_api.upgrade
+            - python -m openeo_argoworkflows_api.upgrade
 
       containers:
         - name: {{ .Chart.Name }}
