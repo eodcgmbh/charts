@@ -30,7 +30,7 @@ microk8s helm install -n test -f values.yaml
 | Key                | Description                                           | Value |
 |--------------------|-------------------------------------------------------|-------|
 | global.env.alembicDir         | Directory for Alembic migrations.          |   "/opt/openeo_argoworkflows_api/psql    |
-| global.env.apiDns             | API DNS address. If localhost, include port.                                       |   localhost:8000    |
+| global.env.apiDns             | API DNS address. If localhost, include port.                                       |   127.0.0.1:8000    |
 | global.env.apiTLS             | API TLS configuration (true/false)                    |   False    |
 | global.env.apiTitle           | Title of the API                                      |   "OpenEO ArgoWorkflows"    |
 | global.env.apiDescription     | Description of the API                                |   "A K8S deployment of the openeo api for argoworkflows."    |
@@ -39,9 +39,9 @@ microk8s helm install -n test -f values.yaml
 | global.env.oidcRoles          | Roles for OpenID Connect authentication               |    ["developer"]   |
 | global.env.stacCatalogueUrl   | URL for STAC catalogue                                |   "https://stac.eodc.eu/api/v1"    |
 | global.env.workspaceRoot      | Root directory for user workspaces                    |   "/user_workspaces"    |
-| global.env.executorImage      | Image for the executor                                |   "ghcr.io/eodcgmbh/openeo-argoworkflows:executor-2024.6.2"    |
+| global.env.executorImage      | Image for the executor                                |   "ghcr.io/eodcgmbh/openeo-argoworkflows:executor-2024.7.1"    |
 | image.repository      | Image for the OpenEO Api                                |   "ghcr.io/eodcgmbh/openeo-argoworkflows"    |
-| image.tag      | Tag for the OpenEO Api                              | "api-2024.7.1"  |
+| image.tag      | Tag for the OpenEO Api                              | "api-2024.7.2"  |
 | persistence.existingVolume      | The name of an existing Persistent Volume Claim to be used for the OpenEO Workspace.  | **Currently unavailable**  |
 | persistence.capacity      |   The size of the Persistent Volume Claim to be used for the OpenEO Workspace        | "8Gi"  |
 
