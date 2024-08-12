@@ -139,8 +139,8 @@ postgresql:
     database: ""
     existingSecret: ""
     secretKeys:
-      adminPasswordKey: ""
-      userPasswordKey: ""
+      adminPasswordKey: 
+      userPasswordKey: 
       replicationPasswordKey: ""
   
   service:

@@ -95,7 +95,7 @@ spec:
               valueFrom:
                 secretKeyRef:
                   name: "openeo-postgresql"
-                  key: password
+                  key: postgres-password
           command: ["sh", "-xc"]
           args:
             - printenv && python -m openeo_argoworkflows_api.upgrade
