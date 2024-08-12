@@ -1,16 +1,4 @@
 {{- if .Values.argoworkflows.enabled }}
-kind: Role
-apiVersion: rbac.authorization.k8s.io/v1
-metadata:
-  name: openeo-access
-rules:
-  - apiGroups: [""]
-    resources: ["secrets"]
-    resourceNames:
-      [
-        "openeo-access",
-      ]
-    verbs: ["get", "delete", "patch"]
 ---
 kind: Role
 apiVersion: rbac.authorization.k8s.io/v1
@@ -41,6 +29,35 @@ subjects:
 - kind: ServiceAccount
   name: openeo-argo-access-sa
 ---
+kind: Role
+apiVersion: rbac.authorization.k8s.io/v1
+metadata:
+  name: openeo-secret-access
+rules:
+  - apiGroups: [""]
+    resources: ["secrets"]
+    verbs: ["get", "list", "patch" ]
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: openeo-secret-access-sa
+  labels:
+    {{- include "openeo-argo.labels" . | nindent 4 }}
+automountServiceAccountToken: true
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: openeo-secret-rb
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: Role
+  name: openeo-secret-access
+subjects:
+- kind: ServiceAccount
+  name: openeo-secret-access-sa
+---
 apiVersion: batch/v1
 kind: Job
 metadata:
@@ -51,7 +68,7 @@ spec:
   template:
     spec:
       restartPolicy: Never
-      serviceAccountName: openeo-argo-access-sa
+      serviceAccountName: openeo-secret-access-sa
       containers:
       - name: openeo-argo-secret-fixer
         imagePullPolicy: IfNotPresent
