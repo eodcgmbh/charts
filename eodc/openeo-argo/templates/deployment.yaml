@@ -95,10 +95,10 @@ spec:
               valueFrom:
                 secretKeyRef:
                   name: "openeo-postgresql"
-                  key: postgres-password
+                  key: password
           command: ["sh", "-xc"]
           args:
-            - python -m openeo_argoworkflows_api.upgrade
+            - printenv && python -m openeo_argoworkflows_api.upgrade
 
       containers:
         - name: {{ .Chart.Name }}
