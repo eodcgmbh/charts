@@ -4,15 +4,38 @@ kind: Role
 apiVersion: rbac.authorization.k8s.io/v1
 metadata:
   name: openeo-argo-access-role
+  namespace: {{ .Release.Namespace }}
 rules:
   - apiGroups: ["argoproj.io"]
     resources: ["workflows"]
     verbs: ["list", "update"]
 ---
+kind: Role
+apiVersion: rbac.authorization.k8s.io/v1
+metadata:
+  name: openeo-secret-access
+  namespace: {{ .Release.Namespace }}
+rules:
+  - apiGroups: [""]
+    resources: ["secrets"]
+    verbs: ["get", "list", "patch", "create" ]
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: openeo-secret-access-sa
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "openeo-argo.labels" . | nindent 4 }}
+automountServiceAccountToken: true
+---
 apiVersion: v1
 kind: ServiceAccount
 metadata:
   name: openeo-argo-access-sa
+  namespace: {{ .Release.Namespace }}
+  annotations:
+    "helm.sh/hook": "pre-install, pre-upgrade"
   labels:
     {{- include "openeo-argo.labels" . | nindent 4 }}
 automountServiceAccountToken: true
@@ -21,6 +44,7 @@ apiVersion: rbac.authorization.k8s.io/v1
 kind: RoleBinding
 metadata:
   name: openeo-argo-access-rb
+  namespace: {{ .Release.Namespace }}
 roleRef:
   apiGroup: rbac.authorization.k8s.io
   kind: Role
@@ -28,28 +52,13 @@ roleRef:
 subjects:
 - kind: ServiceAccount
   name: openeo-argo-access-sa
----
-kind: Role
-apiVersion: rbac.authorization.k8s.io/v1
-metadata:
-  name: openeo-secret-access
-rules:
-  - apiGroups: [""]
-    resources: ["secrets"]
-    verbs: ["get", "list", "patch" ]
----
-apiVersion: v1
-kind: ServiceAccount
-metadata:
-  name: openeo-secret-access-sa
-  labels:
-    {{- include "openeo-argo.labels" . | nindent 4 }}
-automountServiceAccountToken: true
+  namespace: {{ .Release.Namespace }}
 ---
 apiVersion: rbac.authorization.k8s.io/v1
 kind: RoleBinding
 metadata:
   name: openeo-secret-rb
+  namespace: {{ .Release.Namespace }}
 roleRef:
   apiGroup: rbac.authorization.k8s.io
   kind: Role
@@ -57,13 +66,12 @@ roleRef:
 subjects:
 - kind: ServiceAccount
   name: openeo-secret-access-sa
+  namespace: {{ .Release.Namespace }}
 ---
 apiVersion: batch/v1
 kind: Job
 metadata:
   name: openeo-argo-access-init
-  annotations:
-    "helm.sh/hook-delete-policy": "hook-succeeded"
 spec:
   template:
     spec:
