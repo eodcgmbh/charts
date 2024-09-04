@@ -131,17 +131,6 @@ affinity: {}
 postgresql:
 
   enabled: true
-
-  auth:
-    postgresPassword: ""
-    username: ""
-    password: ""
-    database: ""
-    existingSecret: ""
-    secretKeys:
-      adminPasswordKey: ""
-      userPasswordKey: ""
-      replicationPasswordKey: ""
   
   service:
     ports:
