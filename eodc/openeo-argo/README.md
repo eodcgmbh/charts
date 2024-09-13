@@ -39,9 +39,9 @@ microk8s helm install -n test -f values.yaml
 | global.env.oidcRoles          | Roles for OpenID Connect authentication               |    ["developer"]   |
 | global.env.stacCatalogueUrl   | URL for STAC catalogue                                |   "https://stac.eodc.eu/api/v1"    |
 | global.env.workspaceRoot      | Root directory for user workspaces                    |   "/user_workspaces"    |
-| global.env.executorImage      | Image for the executor                                |   "ghcr.io/eodcgmbh/openeo-argoworkflows:executor-2024.7.1"    |
+| global.env.executorImage      | Image for the executor                                |   "ghcr.io/eodcgmbh/openeo-argoworkflows:executor-2024.9.1"    |
 | image.repository      | Image for the OpenEO Api                                |   "ghcr.io/eodcgmbh/openeo-argoworkflows"    |
-| image.tag      | Tag for the OpenEO Api                              | "api-2024.9.1"  |
+| image.tag      | Tag for the OpenEO Api                              | "api-2024.9.2"  |
 | persistence.existingVolume      | The name of an existing Persistent Volume Claim to be used for the OpenEO Workspace.  | **Currently unavailable**  |
 | persistence.capacity      |   The size of the Persistent Volume Claim to be used for the OpenEO Workspace        | "8Gi"  |
 
