@@ -13,7 +13,7 @@ global:
     oidcRoles: ["developer"]
     stacCatalogueUrl: "https://stac.eodc.eu/api/v1"
     workspaceRoot: "/user_workspaces"
-    executorImage: "ghcr.io/eodcgmbh/openeo-argoworkflows:executor-2024.7.1"
+    executorImage: "ghcr.io/eodcgmbh/openeo-argoworkflows:executor-2024.9.1"
 
 replicaCount: 1
 
@@ -23,7 +23,7 @@ image:
   repository: ghcr.io/eodcgmbh/openeo-argoworkflows
   pullPolicy: IfNotPresent
   # Overrides the image tag whose default is the chart appVersion.
-  tag: "api-2024.9.1"
+  tag: "api-2024.9.2"
 
 imagePullSecrets: []
 nameOverride: ""
