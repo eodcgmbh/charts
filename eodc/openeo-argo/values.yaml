@@ -11,7 +11,7 @@ global:
     oidcUrl: "https://aai.egi.eu/auth/realms/egi"
     odicOrganisation: "egi"
     oidcPolicies: ""
-    stacCatalogueUrl: "https://dev.stac.eodc.eu/api/v1"
+    stacCatalogueUrl: "https://stac.eodc.eu/api/v1"
     workspaceRoot: "/user_workspaces"
     executorImage: "ghcr.io/eodcgmbh/openeo-argoworkflows:executor-2024.9.2"
 
