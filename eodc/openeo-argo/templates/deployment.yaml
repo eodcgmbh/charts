@@ -114,8 +114,8 @@ spec:
               value: "{{ .Values.global.env.oidcUrl }}"
             - name: OIDC_ORGANISATION
               value: "{{ .Values.global.env.odicOrganisation }}"
-            - name: OIDC_ROLES
-              value: "{{ .Values.global.env.oidcRoles }}"
+            - name: OIDC_POLICIES
+              value: "{{ .Values.global.env.oidcPolicies }}"
             - name: STAC_API_URL
               value: "{{ .Values.global.env.stacCatalogueUrl }}"
             - name: ARGO_WORKFLOWS_SERVER
@@ -176,8 +176,8 @@ spec:
               value: "{{ .Values.global.env.oidcUrl }}"
             - name: OIDC_ORGANISATION
               value: "{{ .Values.global.env.odicOrganisation }}"
-            - name: OIDC_ROLES
-              value: "{{ .Values.global.env.oidcRoles }}"
+            - name: OIDC_POLICIES
+              value: "{{ .Values.global.env.oidcPolicies }}"
             - name: STAC_API_URL
               value: "{{ .Values.global.env.stacCatalogueUrl }}"
             - name: DASK_GATEWAY_SERVER

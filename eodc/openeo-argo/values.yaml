@@ -10,10 +10,10 @@ global:
     apiDescription: "A K8S deployment of the openeo api for argoworkflows."
     oidcUrl: "https://aai.egi.eu/auth/realms/egi"
     odicOrganisation: "egi"
-    oidcRoles: ["developer"]
+    oidcPolicies: ""
     stacCatalogueUrl: "https://stac.eodc.eu/api/v1"
     workspaceRoot: "/user_workspaces"
-    executorImage: "ghcr.io/eodcgmbh/openeo-argoworkflows:executor-2024.9.1"
+    executorImage: "ghcr.io/eodcgmbh/openeo-argoworkflows:executor-2024.9.2"
 
 replicaCount: 1
 
@@ -23,7 +23,7 @@ image:
   repository: ghcr.io/eodcgmbh/openeo-argoworkflows
   pullPolicy: IfNotPresent
   # Overrides the image tag whose default is the chart appVersion.
-  tag: "api-2024.9.2"
+  tag: "api-2024.9.3"
 
 imagePullSecrets: []
 nameOverride: ""
