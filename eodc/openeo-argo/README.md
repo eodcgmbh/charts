@@ -36,14 +36,19 @@ microk8s helm install -n test -f values.yaml
 | global.env.apiDescription     | Description of the API                                |   "A K8S deployment of the openeo api for argoworkflows."    |
 | global.env.oidcUrl            | URL for OpenID Connect authentication                 |   "https://aai.egi.eu/auth/realms/egi"    |
 | global.env.odicOrganisation   | Organisation for OpenID Connect authentication        |  "egi"   |
-| global.env.oidcRoles          | Roles for OpenID Connect authentication               |    ["developer"]   |
+| global.env.oidcPolicies       | Policies for OpenID Connect authorization             |    ""  |
 | global.env.stacCatalogueUrl   | URL for STAC catalogue                                |   "https://stac.eodc.eu/api/v1"    |
 | global.env.workspaceRoot      | Root directory for user workspaces                    |   "/user_workspaces"    |
-| global.env.executorImage      | Image for the executor                                |   "ghcr.io/eodcgmbh/openeo-argoworkflows:executor-2024.7.1"    |
+| global.env.executorImage      | Image for the executor                                |   "ghcr.io/eodcgmbh/openeo-argoworkflows:executor-2024.9.2"    |
 | image.repository      | Image for the OpenEO Api                                |   "ghcr.io/eodcgmbh/openeo-argoworkflows"    |
-| image.tag      | Tag for the OpenEO Api                              | "api-2024.9.1"  |
+| image.tag      | Tag for the OpenEO Api                              | "api-2024.9.2"  |
 | persistence.existingVolume      | The name of an existing Persistent Volume Claim to be used for the OpenEO Workspace.  | **Currently unavailable**  |
 | persistence.capacity      |   The size of the Persistent Volume Claim to be used for the OpenEO Workspace        | "8Gi"  |
+
+#### Example: global.env.oidcPolicies
+
+Setting the oidcPolicies is explained [here](https://eodcgmbh.github.io/openeo-fastapi/package/client/settings/) in the OpenEO FastApi documentation. The list is provided via the helm chart as a single string. The default value in the chart is an empty string, this disables the policy check and allows any valid token from the issuer.
+
 
 ### Dependency values
 
@@ -83,12 +88,6 @@ Helm Chart: https://github.com/bitnami/charts/tree/main/bitnami/redis
 
 ## Outstanding work
 
-- Api currently has only been tested against the EGI oidc, this needs to be checked against other oidc provideds ( keycloack ). I am not sure that it will currently work as is.
-
-- Currently local dask clients are used in the executor. Dask gateway still needs to be added in order to improve the horizontal parrellelisation of the processing.
-
-- Testing against signed urls.
-
-- Debugging issues around file download.
+- Tiling the outputs of save result.
 
 - Update helm chart to allow for disabling the installation of chart dependencies and reusing existing deployments.
