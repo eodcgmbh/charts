@@ -19,7 +19,7 @@ microk8s kubectl create ns test
 
 microk8s helm dependency build
 
-microk8s helm install -n test -f values.yaml
+microk8s helm install openeo -n test -f values.yaml .
 ```
 
 
