@@ -40,8 +40,12 @@ microk8s helm install openeo -n test -f values.yaml .
 | global.env.stacCatalogueUrl   | URL for STAC catalogue                                |   "https://stac.eodc.eu/api/v1"    |
 | global.env.workspaceRoot      | Root directory for user workspaces                    |   "/user_workspaces"    |
 | global.env.executorImage      | Image for the executor                                |   "ghcr.io/eodcgmbh/openeo-argoworkflows:executor-2024.9.2"    |
+| global.env.daskWorkerCores      | Cores available to the dask worker                               |   "4"    |
+| global.env.daskWorkerMemory      | RAM available to the dask worker (in Gbs)                              |   "8"    |
+| global.env.daskWorkerLimit      | Maximum number of workers available per job.                              |   "6"    |
+| global.env.daskClusterTimeout      | How long an idle cluster can be left unused.                              |   "3600"    |
 | image.repository      | Image for the OpenEO Api                                |   "ghcr.io/eodcgmbh/openeo-argoworkflows"    |
-| image.tag      | Tag for the OpenEO Api                              | "api-2024.10.1"  |
+| image.tag      | Tag for the OpenEO Api                              | "api-2024.10.2"  |
 | persistence.existingVolume      | The name of an existing Persistent Volume Claim to be used for the OpenEO Workspace.  | **Currently unavailable**  |
 | persistence.capacity      |   The size of the Persistent Volume Claim to be used for the OpenEO Workspace        | "8Gi"  |
 
