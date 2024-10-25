@@ -45,7 +45,7 @@ microk8s helm install openeo -n test -f values.yaml .
 | global.env.daskWorkerLimit      | Maximum number of workers available per job.                              |   "6"    |
 | global.env.daskClusterTimeout      | How long an idle cluster can be left unused.                              |   "3600"    |
 | image.repository      | Image for the OpenEO Api                                |   "ghcr.io/eodcgmbh/openeo-argoworkflows"    |
-| image.tag      | Tag for the OpenEO Api                              | "api-2024.10.1"  |
+| image.tag      | Tag for the OpenEO Api                              | "api-2024.10.2"  |
 | persistence.existingVolume      | The name of an existing Persistent Volume Claim to be used for the OpenEO Workspace.  | **Currently unavailable**  |
 | persistence.capacity      |   The size of the Persistent Volume Claim to be used for the OpenEO Workspace        | "8Gi"  |
 
