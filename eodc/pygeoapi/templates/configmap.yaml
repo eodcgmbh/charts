@@ -1,7 +1,0 @@
-apiVersion: v1
-kind: ConfigMap
-metadata:
-  name: pygeoapi-configmap
-data:
-  local.config.yml:
-    {{ toYaml .Values.pygeoapi.server.config.data | indent 4 }}
