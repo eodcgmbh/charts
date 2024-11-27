@@ -1,0 +1,20 @@
+{
+  "name": "@jupyterhub/binderhub-client",
+  "version": "0.4.0",
+  "description": "Simple API client for the BinderHub EventSource API",
+  "main": "lib/index.js",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/jupyterhub/binderhub.git"
+  },
+  "author": "Project Jupyter Contributors",
+  "license": "BSD-3-Clause",
+  "bugs": {
+    "url": "https://github.com/jupyterhub/binderhub/issues"
+  },
+  "homepage": "https://github.com/jupyterhub/binderhub#readme",
+  "dependencies": {
+    "@microsoft/fetch-event-source": "^2.0.1",
+    "event-iterator": "^2.0.0"
+  }
+}
