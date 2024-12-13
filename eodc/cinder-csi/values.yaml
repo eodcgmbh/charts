@@ -1,0 +1,6 @@
+namespace: "openstack"
+
+nameOverride: ""
+fullnameOverride: ""
+
+cloud_config_secret: "cloud-config"
