@@ -13,9 +13,9 @@ spec:
       {{- include "pygeoapi.selectorLabels" . | nindent 6 }}
   template:
     metadata:
-      {{- with .Values.pygeoapi.server.podAnnotations }}
       annotations:
         checksum/config: {{ include (print $.Template.BasePath "/configmap.yaml") . | sha256sum }}
+      {{- with .Values.pygeoapi.server.podAnnotations }}
         {{- toYaml . | nindent 8 }}
       {{- end }}
       labels:
