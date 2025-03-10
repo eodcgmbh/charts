@@ -16,6 +16,8 @@ pygeoapi:
       # Overrides the image tag whose default is the chart appVersion.
       tag: ""
 
+    env: {}
+      
     imagePullSecrets: []
 
     # Parse in your local.config.yaml here. Currently only supported to pipe as a string!
