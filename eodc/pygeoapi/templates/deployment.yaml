@@ -46,15 +46,21 @@ spec:
       containers:
         - name: {{ .Chart.Name }}-server
           env:
+            {{- if .Values.env.ARGO_WORKFLOWS_SERVER }}
             - name: ARGO_WORKFLOWS_SERVER
               value: "{{ .Values.env.ARGO_WORKFLOWS_SERVER }}"
+            {{- end }}
+            {{- if .Values.env.ARGO_WORKFLOWS_NAMESPACE }}
             - name: ARGO_WORKFLOWS_NAMESPACE
               value: "{{ .Values.env.ARGO_WORKFLOWS_NAMESPACE }}"
+            {{- end }}
+            {{- if .Values.env.ARGO_WORKFLOWS_TOKEN.secretName }}
             - name: ARGO_WORKFLOWS_TOKEN
               valueFrom:
                 secretKeyRef:
                   name: "{{ .Values.env.ARGO_WORKFLOWS_TOKEN.secretName }}"
                   key: "{{ .Values.env.ARGO_WORKFLOWS_TOKEN.secretKey }}"
+            {{- end }}
           securityContext:
             {{- toYaml .Values.pygeoapi.server.securityContext | nindent 12 }}
           image: "{{ .Values.pygeoapi.server.image.repository }}:{{ .Values.pygeoapi.server.image.tag | default .Chart.AppVersion }}"
