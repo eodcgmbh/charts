@@ -16,7 +16,12 @@ pygeoapi:
       # Overrides the image tag whose default is the chart appVersion.
       tag: ""
 
-    env: []
+    env:
+      ARGO_WORKFLOWS_SERVER: ""
+      ARGO_WORKFLOWS_NAMESPACE: ""
+      ARGO_WORKFLOWS_TOKEN:
+        secretName: ""
+        secretKey: token
       
     imagePullSecrets: []
 
