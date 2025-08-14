@@ -1,6 +1,7 @@
 name: Release JupyterHub Charts
 
 on:
+  workflow_dispatch:
   push:
     branches:
       - main
