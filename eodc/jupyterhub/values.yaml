@@ -9,6 +9,3 @@ binderhub-service:
       use_registry: true
       image_prefix: 
       base_url: /services/binder
-
-jupyterhub:
-
