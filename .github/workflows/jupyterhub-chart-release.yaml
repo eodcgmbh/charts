@@ -31,11 +31,27 @@ jobs:
         run: |
           helm repo add jupyterhub https://hub.jupyter.org/helm-chart/
           helm repo add binderhub-service https://2i2c.org/binderhub-service
+      
+      - name: Install Homebrew
+        uses: Homebrew/actions/setup-homebrew@mai
+      
+      - name: Install Chart Releaser via Homebrew
+        run: |
+          brew tap helm/tap
+          brew install chart-releaser
 
-      - name: Run chart-releaser
-        uses: helm/chart-releaser-action@v1.7.0
-        with:
-          charts_dir: eodc/jupyterhub
-          packages_with_index: True
+      - name: Release JupyterHub chart
         env:
           CR_TOKEN: "${{ secrets.GITHUB_TOKEN }}"
+        run: |
+          cr package eodc/jupyterhub
+          cr upload --owner eodcgmbh --token $CR_TOKEN --git-repo charts --packages-with-index --push --skip-existing 
+          cr index --owner eodcgmbh --token $CR_TOKEN --git-repo charts --packages-with-index --index-path . --push
+
+      # - name: Run chart-releaser
+      #   uses: helm/chart-releaser-action@v1.7.0
+      #   with:
+      #     charts_dir: eodc/jupyterhub
+      #     packages_with_index: True
+      #   env:
+      #     CR_TOKEN: "${{ secrets.GITHUB_TOKEN }}"
