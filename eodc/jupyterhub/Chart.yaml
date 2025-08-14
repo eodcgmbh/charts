@@ -1,0 +1,24 @@
+apiVersion: v2
+name: jupyterhub
+description: JupyterHub service
+
+# A chart can be either an 'application' or a 'library' chart.
+#
+# Application charts are a collection of templates that can be packaged into versioned archives
+# to be deployed.
+#
+# Library charts provide useful utilities or functions for the chart developer. They're included as
+# a dependency of application charts to inject those utilities and functions into the rendering
+# pipeline. Library charts do not define any templates and therefore cannot be deployed.
+type: application
+version: 0.1.0
+# App version of JupyterHub
+appVersion: "5.3.0"
+
+dependencies:
+  - name: binderhub-service
+    version: "0.1.0-0.dev.git.316.h27f15f4"
+    repository: https://2i2c.org/binderhub-service
+  - name: jupyterhub
+    version: 4.2.0
+    repository: https://hub.jupyter.org/helm-chart/
