@@ -33,7 +33,7 @@ jobs:
           helm repo add binderhub-service https://2i2c.org/binderhub-service
       
       - name: Install Homebrew
-        uses: Homebrew/actions/setup-homebrew@mai
+        uses: Homebrew/actions/setup-homebrew@main
       
       - name: Install Chart Releaser via Homebrew
         run: |
