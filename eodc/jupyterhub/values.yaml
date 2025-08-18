@@ -1,11 +1,25 @@
-binderhub-service:
-  buildPodsRegistryCredentials:
-    server: 
-    username:  # Container registry credentials username
-    password:  # Container registry credentials password                
+---
+binderhub-service:          
   config:
     BinderHub:
       auth_enabled: false
       use_registry: true
-      image_prefix: 
       base_url: /services/binder
+jupyterhub:
+  hub:
+    networkPolicy:
+      enabled: false
+    image:
+      name: ghcr.io/eodcgmbh/fancy_jhub
+      tag: latest
+
+    extraConfig:
+      00-enable-fancy-profiles: |
+        from jupyterhub_fancy_profiles import setup_ui
+        setup_ui(c)
+    config:
+      BinderSpawner:
+        auth_enabled: false
+        cors_allow_origin: '*'
+      JupyterHub:
+        redirect_to_server: false 
