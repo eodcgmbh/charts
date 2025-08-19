@@ -1,9 +1,12 @@
 ---
-binderhub-service:          
+binderhub-service:
+  networkPolicy:
+    enabled: false
   config:
     BinderHub:
       auth_enabled: false
       use_registry: true
+      cors_allow_origin: '*'
       base_url: /services/binder
 jupyterhub:
   hub:
