@@ -1,0 +1,15 @@
+dask-gateway:
+  gateway:
+    image:
+      name: ghcr.io/eodcgmbh/container-images/dask-gateway-server-jwt
+      tag: 2025.4.0
+      pullPolicy: Always
+    backend:
+      image:
+        pullPolicy: Always
+
+  controller:
+    image:
+      name: ghcr.io/eodcgmbh/container-images/dask-gateway-server-jwt
+      tag: 2025.4.0
+      pullPolicy: Always
