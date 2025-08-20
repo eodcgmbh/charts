@@ -1,5 +1,16 @@
 apiVersion: v1
 entries:
+  dask-gateway:
+  - apiVersion: v2
+    appVersion: 1.16.0
+    created: "2025-08-20T13:05:18.347978471Z"
+    description: A Helm chart for Kubernetes
+    digest: d3fb62ed176b6098c5d902bfcad5346f6a78b4a81c00c72342bcf6371b63a0c2
+    name: dask-gateway
+    type: application
+    urls:
+    - dask-gateway-0.1.0.tgz
+    version: 0.1.0
   jupyterhub:
   - apiVersion: v2
     appVersion: 5.3.0
@@ -120,4 +131,4 @@ entries:
     urls:
     - jupyterhub-0.1.0.tgz
     version: 0.1.0
-generated: "2025-08-19T12:38:40.253597382Z"
+generated: "2025-08-20T13:05:18.347997416Z"
