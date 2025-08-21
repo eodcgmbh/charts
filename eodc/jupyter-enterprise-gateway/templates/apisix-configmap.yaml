@@ -1,0 +1,184 @@
+kind: ConfigMap
+apiVersion: v1
+metadata:
+  name: apisix-config.yaml
+  annotations:
+    "helm.sh/hook": pre-install,pre-upgrade
+    "helm.sh/hook-delete-policy": before-hook-creation
+data:
+  apisix.yaml: |
+    consumers:
+      -
+        username: JEG
+        desc: Consumer for Jupyter Enterprise Gateway
+        plugins:
+          basic-auth:
+            password: {{ .Values.jupyterhub.auth.password}}
+            username: {{ .Values.jupyterhub.auth.user}}
+
+    plugins: 
+      - name: basic-auth
+      - name: serverless-pre-function
+      - name: response-rewrite
+    
+    plugin_configs:
+      -
+        id: 5
+        plugins:
+          serverless-pre-function:
+            phase: rewrite
+            functions:
+              - |
+                return function(conf, ctx)                      
+                  local core = require("apisix.core");
+                  local jwt = require("resty.jwt");
+                  local jwt_token = core.request.header(ctx, "Authorization"); 
+                  local quota_cpu = nil;
+                  local quota_mem = nil;
+
+                  if jwt_token ~= nil then
+                    local _, _, jwt_token_only = string.find(jwt_token, "Bearer%s+(.+)"); 
+                    
+                    if jwt_token_only ~= nil then 
+                      local jwt_obj = jwt:load_jwt(jwt_token_only);
+                      
+                      if jwt_obj.valid then 
+                        local roles = jwt_obj.payload.realm_access.roles; 
+                        local authz = nil; 
+                        for _, therole in pairs(roles) do 
+                          if therole=="stack-jupyter" then 
+                            authz = 1;
+                            -- ngx.log(ngx.ALERT, "Access granted for: " .. jwt_obj.payload.preferred_username); 
+                          end
+                          if therole=="stack-jupyter-low" then 
+                            quota_cpu = "2";
+                            quota_mem = "2Gi";
+                          end
+                          if therole=="stack-jupyter-medium" then 
+                            quota_cpu = "6";
+                            quota_mem = "18Gi";
+                          end
+                          if therole=="stack-jupyter-high" then 
+                            quota_cpu = "12";
+                            quota_mem = "32Gi";
+                          end
+                        end 
+                        if authz == nil then 
+                          core.response.exit(401, {error_msg="User not authorized."});
+                        end 
+                      else
+                        core.response.exit(401, {error_msg="Not a valid token"}); 
+                      end
+                    else 
+                      core.response.exit(401, {msg="Emtpy Bearer token"});
+                    end 
+                  else 
+                      core.response.exit(401, {msg="no toke provided"}); 
+                  end
+
+                  local body = core.request.get_body()
+                  if not body then
+                      return
+                  end
+
+                  -- Parse the JSON body
+                  local json_body, err = core.json.decode(body)
+                  if err then
+                      core.log.error("Failed to decode JSON: ", err)
+                      return
+                  end
+                  -- ngx.log(ngx.ALERT, body)
+
+                  -- Modify or add a new field
+                  json_body["env"]["KERNEL_CPUS"] = "1";
+                  json_body["env"]["KERNEL_CPUS_LIMIT"] = quota_cpu;
+                  json_body["env"]["KERNEL_MEMORY"] = "1Gi";
+                  json_body["env"]["KERNEL_MEMORY_LIMIT"] = quota_mem;
+
+                  -- Serialize the modified JSON back to a string
+                  local new_body, err = core.json.encode(json_body)
+                  if err then
+                      core.log.error("Failed to encode JSON: ", err)
+                      return
+                  end
+
+                  ngx.log(ngx.ALERT, "new body: " .. new_body)
+
+                  -- Update the request body
+                  ngx.req.set_body_data(new_body)
+                end
+      -
+        id: 4
+        plugins:
+          serverless-pre-function:
+            phase: rewrite
+            functions: 
+                - |
+                  return function(conf, ctx)                      
+                    local core = require("apisix.core");
+                    local jwt = require("resty.jwt");
+                    local jwt_token = core.request.header(ctx, "Authorization"); 
+                                          
+                    if jwt_token ~= nil then
+                      local _, _, jwt_token_only = string.find(jwt_token, "Bearer%s+(.+)"); 
+                      
+                      if jwt_token_only ~= nil then 
+                        local jwt_obj = jwt:load_jwt(jwt_token_only);
+                        
+                        if jwt_obj.valid then 
+                          local roles = jwt_obj.payload.realm_access.roles; 
+                          local authz = nil; 
+                          for _, therole in pairs(roles) do 
+                            if therole=="stack-jupyter" then 
+                              authz = 1;
+                              ngx.log(ngx.ALERT, "Access granted for: " .. jwt_obj.payload.preferred_username); 
+                            end 
+                          end 
+                          if authz == nil then 
+                            core.response.exit(401, {error_msg="User not authorized."});
+                          end 
+                        else
+                          core.response.exit(401, {error_msg="Not a valid token"}); 
+                        end
+                      else 
+                        core.response.exit(401, {msg="Emtpy Bearer token"});
+                      end 
+                    else 
+                        core.response.exit(401, {msg="no toke provided"}); 
+                    end
+                  end
+
+    routes:
+    - 
+      uri: /*
+      name: dedl-kernels
+      host: {{ .Values.domainname.public }}
+      enable_websocket: true
+      upstream_id: 2
+      plugin_config_id: 4
+    - 
+      uri: /api/kernels
+      name: dedl-kernels-quota
+      host: {{ .Values.domainname.public }}
+      enable_websocket: true
+      upstream_id: 2
+      plugin_config_id: 5
+      methods:
+        - POST
+    -
+      uri: /*
+      name: dedl-kernels-jupyterhub
+      host: {{ .Values.domainname.jupyterhub }}
+      enable_websocket: true
+      upstream_id: 2
+      plugins:
+        basic-auth:
+          _meta:
+            disable: false
+    
+    upstreams:
+    - id: 2
+      nodes:
+        "enterprise-gateway.{{ .Release.Namespace }}.svc.cluster.local:8888": 1
+      type: roundrobin
+    #END
