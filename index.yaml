@@ -3,6 +3,24 @@ entries:
   dask-gateway:
   - apiVersion: v2
     appVersion: 2025.4.0
+    created: "2025-08-21T14:30:12.326609184Z"
+    dependencies:
+    - name: dask-gateway
+      repository: https://helm.dask.org/
+      version: 2025.4.0
+    description: Dask Gateway service
+    digest: 12419d067b874350edc13e0bb8c87eec2ed3337eaa8fee174b5b69e68c66ee53
+    maintainers:
+    - email: christoph.reimer@eodc.eu
+      name: Christoph Reimer
+      url: https://github.com/christophreimer
+    name: dask-gateway
+    type: application
+    urls:
+    - dask-gateway-0.1.3.tgz
+    version: 0.1.3
+  - apiVersion: v2
+    appVersion: 2025.4.0
     created: "2025-08-20T17:30:03.585928695Z"
     dependencies:
     - name: dask-gateway
@@ -149,4 +167,4 @@ entries:
     urls:
     - jupyterhub-0.1.0.tgz
     version: 0.1.0
-generated: "2025-08-20T17:30:03.585948391Z"
+generated: "2025-08-21T14:30:12.326630805Z"
