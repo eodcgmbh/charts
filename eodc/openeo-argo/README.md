@@ -66,6 +66,10 @@ It is possible to configure the additional helm values for these charts.
 |  argoworkflows.enabled     |   Whether to install argoworkflows within the OpenEO Deployment     | True |
 |  redis.enabled     |   Whether to install redis within the OpenEO Deployment   | True |
 
+#### ! Notice !
+
+The images used in this chart for redis and postgresql now must use the bitnamilegacy repository as a consequence of bitnami removing their publicly
+available docker images. The default values have been updated to now parse the bitnamilegacy docker repo.
 
 ## Dependencies
 
