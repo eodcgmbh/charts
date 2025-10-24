@@ -11,6 +11,16 @@ entries:
     urls:
     - cinder-csi-2025.10.1-rc1.tgz
     version: 2025.10.1-rc1
+  - apiVersion: v2
+    created: "2025-10-24T12:56:59.11462649Z"
+    description: A housing for installing cinder-csi  manifests that are currently
+      being used to provide a CSI to cinder in openstack.
+    digest: 3c16a8e49ec38ef776d27a665ce566e41329f92a6dd3c8b874c26608af6ab98d
+    name: cinder-csi
+    type: application
+    urls:
+    - cinder-csi-2025.10.1-rc1.tgz
+    version: 2025.10.1-rc1
   dashboards:
   - apiVersion: v2
     created: "2025-10-24T10:53:49.899361751Z"
@@ -22,7 +32,35 @@ entries:
     urls:
     - dashboards-2025.10.1-rc1.tgz
     version: 2025.10.1-rc1
+  - apiVersion: v2
+    created: "2025-10-24T12:56:59.261807393Z"
+    description: Basic helm chart for K8s for making the deployment of dashboards
+      at EODC easier.
+    digest: d04b39850c19845bdaf63abbcd89f73f8dee451ef0e0695ac8fb592601af33cf
+    name: dashboards
+    type: application
+    urls:
+    - dashboards-2025.10.1-rc1.tgz
+    version: 2025.10.1-rc1
   dask-gateway:
+  - apiVersion: v2
+    appVersion: 2025.4.0
+    created: "2025-10-24T12:56:59.414110044Z"
+    dependencies:
+    - name: dask-gateway
+      repository: https://helm.dask.org/
+      version: 2025.4.0
+    description: Dask Gateway service
+    digest: 3fdd681614320182c319c86c9bc1e1971d09de2e1c18bc3004a98a1079579c7b
+    maintainers:
+    - email: christoph.reimer@eodc.eu
+      name: Christoph Reimer
+      url: https://github.com/christophreimer
+    name: dask-gateway
+    type: application
+    urls:
+    - dask-gateway-2025.10.1-rc1.tgz
+    version: 2025.10.1-rc1
   - apiVersion: v2
     appVersion: 2025.4.0
     created: "2025-09-09T16:41:07.673471858Z"
@@ -88,6 +126,23 @@ entries:
     - dask-gateway-0.1.0.tgz
     version: 0.1.0
   jupyterhub:
+  - apiVersion: v2
+    appVersion: 5.3.0
+    created: "2025-10-24T12:56:59.575144906Z"
+    dependencies:
+    - name: binderhub-service
+      repository: https://2i2c.org/binderhub-service
+      version: 0.1.0-0.dev.git.316.h27f15f4
+    - name: jupyterhub
+      repository: https://hub.jupyter.org/helm-chart/
+      version: 4.2.0
+    description: JupyterHub service
+    digest: 4cc9ee46919c54a243b3c581f66e70a42f934014ca5cc3ebb9d2be7660489f49
+    name: jupyterhub
+    type: application
+    urls:
+    - jupyterhub-2025.10.1.tgz
+    version: 2025.10.1
   - apiVersion: v2
     appVersion: 5.3.0
     created: "2025-08-19T12:38:40.253561776Z"
@@ -271,4 +326,4 @@ entries:
     urls:
     - wg-nginx-2025.10.1-rc1.tgz
     version: 2025.10.1-rc1
-generated: "2025-10-24T10:53:50.323791719Z"
+generated: "2025-10-24T12:56:59.5752059Z"
