@@ -172,3 +172,5 @@ notebooks/
 tmp/
 .tmp/
 testing/
+
+.*.yaml
