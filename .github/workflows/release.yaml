@@ -1,4 +1,4 @@
-name: EODC charts release
+name: EODC Charts Release
 
 on:
   workflow_dispatch:
@@ -39,18 +39,10 @@ jobs:
           helm repo add postgresql https://charts.bitnami.com/bitnami
           helm repo add argo-workflows https://argoproj.github.io/argo-helm
 
-      - name: Install Homebrew
-        uses: Homebrew/actions/setup-homebrew@main
-      
-      - name: Install Chart Releaser via Homebrew
-        run: |
-          brew tap helm/tap
-          brew install chart-releaser
-
-      - name: Release Dask Gateway chart
+      - name: Run chart-releaser
+        uses: helm/chart-releaser-action@v1.7.0
+        with:
+          charts_dir: eodc
+          packages_with_index: True
         env:
           CR_TOKEN: "${{ secrets.GITHUB_TOKEN }}"
-        run: |
-          cr package eodc/dask-gateway
-          cr upload --owner eodcgmbh --token $CR_TOKEN --git-repo charts --packages-with-index --push --skip-existing 
-          cr index --owner eodcgmbh --token $CR_TOKEN --git-repo charts --packages-with-index --index-path . --push
