@@ -185,4 +185,20 @@ entries:
     urls:
     - jupyterhub-0.1.0.tgz
     version: 0.1.0
-generated: "2025-09-09T16:41:07.673502436Z"
+  wg-nginx:
+  - apiVersion: v2
+    appVersion: 1.16.0
+    created: "2025-10-24T10:07:50.334484307Z"
+    dependencies:
+    - name: wg-k8s
+      repository: https://serrichard.github.io/wg-k8s
+      version: 2025.10.1-rc5
+    description: A small helm chart which adds an nginx proxy infront of a wireguard
+      deployment.
+    digest: 5f2e174ed6ab6575d9257afd550f3529b95cfc3bb198c340a92ae4bbf3a67fea
+    name: wg-nginx
+    type: application
+    urls:
+    - wg-nginx-2025.10.1-rc1.tgz
+    version: 2025.10.1-rc1
+generated: "2025-10-24T10:07:50.334512529Z"
