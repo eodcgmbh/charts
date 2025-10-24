@@ -1,14 +1,10 @@
-name: EODC Charts Release
+name: EODC Charts rediselease
 
 on:
   workflow_dispatch:
   push:
     branches:
       - main
-    # tags:
-    #   - "dask-gateway-server-*"
-    # paths:
-    #   - eodc/dask-gateway/**
 
 jobs:
   release:
