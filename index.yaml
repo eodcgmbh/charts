@@ -31,6 +31,16 @@ entries:
     urls:
     - cinder-csi-2025.10.1-rc1.tgz
     version: 2025.10.1-rc1
+  - apiVersion: v2
+    created: "2025-10-24T13:19:09.706634865Z"
+    description: A housing for installing cinder-csi  manifests that are currently
+      being used to provide a CSI to cinder in openstack.
+    digest: 95d6dbc7eabcff1974ab2dd1690bb7fa0f203956cff23a2b27c64b1c925a5d2b
+    name: cinder-csi
+    type: application
+    urls:
+    - cinder-csi-2025.10.1-rc1.tgz
+    version: 2025.10.1-rc1
   dashboards:
   - apiVersion: v2
     created: "2025-10-24T10:53:49.899361751Z"
@@ -57,6 +67,16 @@ entries:
     description: Basic helm chart for K8s for making the deployment of dashboards
       at EODC easier.
     digest: f97c6c53259776a2df47920c74f006cc26966a77857cf6a5a9efe8cae9c8c1e8
+    name: dashboards
+    type: application
+    urls:
+    - dashboards-2025.10.1-rc1.tgz
+    version: 2025.10.1-rc1
+  - apiVersion: v2
+    created: "2025-10-24T13:19:09.863413269Z"
+    description: Basic helm chart for K8s for making the deployment of dashboards
+      at EODC easier.
+    digest: 0514dd62404a03a443e92dbe8cc9e2ea4dbed14a49d729c88a961ade8898cbb2
     name: dashboards
     type: application
     urls:
@@ -333,6 +353,31 @@ entries:
     urls:
     - openeo-argo-2025.10.1-rc1.tgz
     version: 2025.10.1-rc1
+  - apiVersion: v2
+    appVersion: 1.16.0
+    created: "2025-10-24T13:19:10.260359726Z"
+    dependencies:
+    - name: redis
+      repository: https://charts.bitnami.com/bitnami
+      version: 19.5.2
+    - condition: postgresql.enabled
+      name: postgresql
+      repository: https://charts.bitnami.com/bitnami
+      version: 15.5.1
+    - condition: argoworkflows.enabled
+      name: argo-workflows
+      repository: https://argoproj.github.io/argo-helm
+      version: 0.32.0
+    - name: dask-gateway
+      repository: https://helm.dask.org
+      version: 2024.1.0
+    description: A Helm chart for an OpenEO Argo Workflow implementation
+    digest: f5617c891ad9f5a598255832816af277ced870175b7058018ddcf78a61517bc0
+    name: openeo-argo
+    type: application
+    urls:
+    - openeo-argo-2025.10.1-rc1.tgz
+    version: 2025.10.1-rc1
   pygeoapi:
   - apiVersion: v2
     appVersion: 0.15.0
@@ -349,6 +394,16 @@ entries:
     created: "2025-10-24T13:09:24.213303092Z"
     description: A Helm chart for Kubernetes
     digest: 57e786026a71e7c222b1cde5b8323502610838b156b0be1429044e3912579075
+    name: pygeoapi
+    type: application
+    urls:
+    - pygeoapi-2025.10.1-rc1.tgz
+    version: 2025.10.1-rc1
+  - apiVersion: v2
+    appVersion: 0.15.0
+    created: "2025-10-24T13:19:10.38932863Z"
+    description: A Helm chart for Kubernetes
+    digest: 9c8ac88ef2fca1f2ff4b9fce7b32f11a53fc343d6afd2d95ea27ddf7a0f4246f
     name: pygeoapi
     type: application
     urls:
@@ -375,6 +430,16 @@ entries:
     urls:
     - stac-browser-2025.10.1-rc1.tgz
     version: 2025.10.1-rc1
+  - apiVersion: v2
+    appVersion: v3.1.0-rc.1
+    created: "2025-10-24T13:19:10.571972956Z"
+    description: A Helm for deploying the stac-browser on Kubernetes
+    digest: b50acaa2910182dda81e713f0477769be8168fbd7a26ff2c2201f62c23555f7c
+    name: stac-browser
+    type: application
+    urls:
+    - stac-browser-2025.10.1-rc1.tgz
+    version: 2025.10.1-rc1
   wg-nginx:
   - apiVersion: v2
     appVersion: 1.16.0
@@ -391,4 +456,4 @@ entries:
     urls:
     - wg-nginx-2025.10.1-rc1.tgz
     version: 2025.10.1-rc1
-generated: "2025-10-24T13:09:24.393416478Z"
+generated: "2025-10-24T13:19:10.572076369Z"
