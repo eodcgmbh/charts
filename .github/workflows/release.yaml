@@ -1,0 +1,56 @@
+name: EODC charts release
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - main
+    # tags:
+    #   - "dask-gateway-server-*"
+    # paths:
+    #   - eodc/dask-gateway/**
+
+jobs:
+  release:
+    permissions:
+      contents: write
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v5
+        with:
+          fetch-depth: 0
+
+      - name: Configure Git
+        run: |
+          git config user.name "$GITHUB_ACTOR"
+          git config user.email "$GITHUB_ACTOR@users.noreply.github.com"
+      
+      - name: Install Helm
+        uses: azure/setup-helm@v4
+      
+      - name: add repos
+        run: |
+          helm repo add dask-gateway https://helm.dask.org
+          helm repo add jupyterhub https://hub.jupyter.org/helm-chart/
+          helm repo add binderhub-service https://2i2c.org/binderhub-service
+          helm repo add wg-k8s https://serrichard.github.io/wg-k8s
+          helm repo add redis https://charts.bitnami.com/bitnami
+          helm repo add postgresql https://charts.bitnami.com/bitnami
+          helm repo add argo-workflows https://argoproj.github.io/argo-helm
+
+      - name: Install Homebrew
+        uses: Homebrew/actions/setup-homebrew@main
+      
+      - name: Install Chart Releaser via Homebrew
+        run: |
+          brew tap helm/tap
+          brew install chart-releaser
+
+      - name: Release Dask Gateway chart
+        env:
+          CR_TOKEN: "${{ secrets.GITHUB_TOKEN }}"
+        run: |
+          cr package eodc/dask-gateway
+          cr upload --owner eodcgmbh --token $CR_TOKEN --git-repo charts --packages-with-index --push --skip-existing 
+          cr index --owner eodcgmbh --token $CR_TOKEN --git-repo charts --packages-with-index --index-path . --push
