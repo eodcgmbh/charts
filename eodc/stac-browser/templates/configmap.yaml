@@ -1,7 +1,0 @@
-apiVersion: v1
-kind: ConfigMap
-metadata:
-  name: stac-browser-configmap
-data:
-  config.js: |
-    window.STAC_BROWSER_CONFIG= {{- toJson .Values.server.config.data }}
