@@ -1,0 +1,28 @@
+{{- if .Values.pygeoapi.autoscaling.enabled }}
+apiVersion: autoscaling/v2beta1
+kind: HorizontalPodAutoscaler
+metadata:
+  name: {{ include "pygeoapi.fullname" . }}
+  labels:
+    {{- include "pygeoapi.labels" . | nindent 4 }}
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: {{ include "pygeoapi.fullname" . }}
+  minReplicas: {{ .Values.pygeoapi.autoscaling.minReplicas }}
+  maxReplicas: {{ .Values.pygeoapi.autoscaling.maxReplicas }}
+  metrics:
+    {{- if .Values.pygeoapi.autoscaling.targetCPUUtilizationPercentage }}
+    - type: Resource
+      resource:
+        name: cpu
+        targetAverageUtilization: {{ .Values.pygeoapi.autoscaling.targetCPUUtilizationPercentage }}
+    {{- end }}
+    {{- if .Values.pygeoapi.autoscaling.targetMemoryUtilizationPercentage }}
+    - type: Resource
+      resource:
+        name: memory
+        targetAverageUtilization: {{ .Values.pygeoapi.autoscaling.targetMemoryUtilizationPercentage }}
+    {{- end }}
+{{- end }}

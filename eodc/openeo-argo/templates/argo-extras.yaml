@@ -1,0 +1,96 @@
+{{- if .Values.argoworkflows.enabled }}
+---
+kind: Role
+apiVersion: rbac.authorization.k8s.io/v1
+metadata:
+  name: openeo-argo-access-role
+  namespace: {{ .Release.Namespace }}
+rules:
+  - apiGroups: ["argoproj.io"]
+    resources: ["workflows"]
+    verbs: [ "get","create", "list", "update", "patch" ]
+---
+kind: Role
+apiVersion: rbac.authorization.k8s.io/v1
+metadata:
+  name: openeo-secret-access
+  namespace: {{ .Release.Namespace }}
+rules:
+  - apiGroups: [""]
+    resources: ["secrets"]
+    verbs: ["get", "list", "patch", "create" ]
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: openeo-secret-access-sa
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "openeo-argo.labels" . | nindent 4 }}
+automountServiceAccountToken: true
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: openeo-argo-access-sa
+  namespace: {{ .Release.Namespace }}
+  annotations:
+    "helm.sh/hook": "pre-install, pre-upgrade"
+  labels:
+    {{- include "openeo-argo.labels" . | nindent 4 }}
+automountServiceAccountToken: true
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: openeo-argo-access-rb
+  namespace: {{ .Release.Namespace }}
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: Role
+  name: openeo-argo-access-role
+subjects:
+- kind: ServiceAccount
+  name: openeo-argo-access-sa
+  namespace: {{ .Release.Namespace }}
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: openeo-secret-rb
+  namespace: {{ .Release.Namespace }}
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: Role
+  name: openeo-secret-access
+subjects:
+- kind: ServiceAccount
+  name: openeo-secret-access-sa
+  namespace: {{ .Release.Namespace }}
+---
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: openeo-argo-access-init
+spec:
+  template:
+    spec:
+      restartPolicy: Never
+      serviceAccountName: openeo-secret-access-sa
+      containers:
+      - name: openeo-argo-secret-fixer
+        imagePullPolicy: IfNotPresent
+        image: bitnami/kubectl:latest
+        command: ["sh", "-xc"]
+        args:
+          - |
+            kubectl apply -f - <<EOF
+            apiVersion: v1
+            kind: Secret
+            metadata:
+              name: openeo-argo-access-sa.service-account-token
+              annotations:
+                kubernetes.io/service-account.name: openeo-argo-access-sa
+            type: kubernetes.io/service-account-token
+            EOF
+{{- end }}
