@@ -12,10 +12,10 @@ Application helm charts, created by EODC, ready to launch on Kubernetes using Ku
   - OpenEO ArgoWorkflows
   - PyGeoApi
   - Stac Browser
+  - WG Nginx
 
 ## Common Configurations
 
   - Cinder CSI
   - Dask-Gateway
   - Jupyterhub
-  - WG Nginx
