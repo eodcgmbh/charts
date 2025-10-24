@@ -1,0 +1,253 @@
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: "openeo-sign-key"
+type: Opaque
+data:
+  # retrieve the secret data using lookup function and when not exists, return an empty dictionary / map as result
+  {{- $secretObj := (lookup "v1" "Secret" .Release.Namespace "openeo-sign-key") | default dict }}
+  {{- $secretData := (get $secretObj "data") | default dict }}
+  # set $jwtSecret to existing secret data or generate a random one when not exists
+  {{- $signSecret := (get $secretData "openeo-sign-key") | default (randAlphaNum 32 | b64enc) }}
+  sign-secret: {{ $signSecret | quote }}
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "openeo-argo.fullname" . }}
+  labels:
+    {{- include "openeo-argo.labels" . | nindent 4 }}
+  annotations:
+    "helm.sh/hook": "post-install,post-upgrade"
+    "helm.sh/hook-weight": "100"
+spec:
+  {{- if not .Values.autoscaling.enabled }}
+  replicas: {{ .Values.replicaCount }}
+  {{- end }}
+  selector:
+    matchLabels:
+      {{- include "openeo-argo.selectorLabels" . | nindent 6 }}
+  template:
+    metadata:
+      {{- with .Values.podAnnotations }}
+      annotations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      labels:
+        {{- include "openeo-argo.labels" . | nindent 8 }}
+        {{- with .Values.podLabels }}
+        {{- toYaml . | nindent 8 }}
+        {{- end }}
+    spec:
+      {{- with .Values.imagePullSecrets }}
+      imagePullSecrets:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      serviceAccountName: {{ include "openeo-argo.serviceAccountName" . }}
+      securityContext:
+        {{- toYaml .Values.podSecurityContext | nindent 8 }}
+      volumes:
+      - name: workspace-mount
+        persistentVolumeClaim:
+          claimName: openeo-workspace
+
+      initContainers:
+        - name: {{ .Chart.Name }}-wait-on-postgres
+          image: bitnami/kubectl:latest
+          command: ['sh', '-c', 'until kubectl get po openeo-postgresql-0 -n {{ .Release.Namespace }} -o jsonpath="{.status.containerStatuses[0].ready}" | grep -q "true"; do echo "Waiting for postgres..."; sleep 5; done']
+
+        - name: {{ .Chart.Name }}-wait-on-redis
+          image: bitnami/kubectl:latest
+          command: ['sh', '-c', 'until kubectl get po openeo-redis-master-0 -n {{ .Release.Namespace }} -o jsonpath="{.status.containerStatuses[0].ready}" | grep -q "true"; do echo "Waiting for redis..."; sleep 5; done']
+
+        - name: {{ .Chart.Name }}-db-revision
+          image: "{{ .Values.image.repository }}:{{ .Values.image.tag | default .Chart.AppVersion }}"
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          env:
+            - name: ALEMBIC_DIR
+              value: "{{ .Values.global.env.alembicDir }}"
+            - name: POSTGRESQL_HOST
+              value: "openeo-postgresql-hl.{{ .Release.Namespace }}.svc.{{ .Values.postgresql.clusterDomain }}"
+            - name: POSTGRESQL_PORT
+              value: "{{ .Values.postgresql.service.ports.postgresql }}"
+            - name: POSTGRES_USER
+              value: {{ .Values.postgresql.auth.username | default "postgres"  | quote}}
+            - name: POSTGRES_DB
+              value: {{ .Values.postgresql.auth.database | default "postgres"  | quote}}
+            - name: POSTGRES_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: "openeo-postgresql"
+                  key: postgres-password
+          command: ["sh", "-xc"]
+          args:
+            - python -m openeo_argoworkflows_api.upgrade
+
+      containers:
+        - name: {{ .Chart.Name }}
+          securityContext:
+            {{- toYaml .Values.securityContext | nindent 12 }}
+          image: "{{ .Values.image.repository }}:{{ .Values.image.tag | default .Chart.AppVersion }}"
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          env:
+            - name: ALEMBIC_DIR
+              value: "{{ .Values.global.env.alembicDir }}"
+            - name: API_DNS
+              value: "{{ .Values.global.env.apiDns }}"
+            - name: API_TLS
+              value: "{{ .Values.global.env.apiTLS }}"
+            - name: API_TITLE
+              value: "{{ .Values.global.env.apiTitle }}"
+            - name: API_DESCRIPTION
+              value: "{{ .Values.global.env.apiDescription }}"
+            - name: OPENEO_WORKSPACE_ROOT
+              value: "{{ .Values.global.env.workspaceRoot }}"
+            - name: OPENEO_EXECUTOR_IMAGE
+              value: "{{ .Values.global.env.executorImage }}"
+            - name: OPENEO_SIGN_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: "openeo-sign-key"
+                  key: sign-secret
+            - name: OIDC_URL
+              value: "{{ .Values.global.env.oidcUrl }}"
+            - name: OIDC_ORGANISATION
+              value: "{{ .Values.global.env.odicOrganisation }}"
+            - name: OIDC_POLICIES
+              value: "{{ .Values.global.env.oidcPolicies }}"
+            - name: STAC_API_URL
+              value: "{{ .Values.global.env.stacCatalogueUrl }}"
+            - name: ARGO_WORKFLOWS_SERVER
+              value: "http://openeo-argo-workflows-server.{{ .Release.Namespace }}.svc.cluster.local:2746"
+            - name: ARGO_WORKFLOWS_NAMESPACE
+              value: {{ .Release.Namespace }}
+            - name: ARGO_WORKFLOWS_TOKEN
+              valueFrom:
+                secretKeyRef:
+                  name: "openeo-argo-access-sa.service-account-token"
+                  key: token
+            - name: ARGO_WORKFLOWS_LIMIT
+              value: "10"
+            - name: REDIS_HOST
+              value: "openeo-redis-master.{{ .Release.Namespace }}.svc.cluster.local"
+            - name: REDIS_PORT
+              value: "6379" 
+            - name: POSTGRESQL_HOST
+              value: "openeo-postgresql-hl.{{ .Release.Namespace }}.svc.{{ .Values.postgresql.clusterDomain }}"
+            - name: POSTGRESQL_PORT
+              value: "{{ .Values.postgresql.service.ports.postgresql }}"
+            - name: POSTGRES_USER
+              value: {{ .Values.postgresql.auth.username | default "postgres"  | quote}}
+            - name: POSTGRES_DB
+              value: {{ .Values.postgresql.auth.database | default "postgres"  | quote}}
+            - name: POSTGRES_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: "openeo-postgresql"
+                  key: postgres-password
+          volumeMounts:
+            - name: workspace-mount
+              mountPath: "{{ .Values.global.env.workspaceRoot }}"
+
+
+        - name: {{ .Chart.Name }}-queue-worker
+          securityContext:
+            {{- toYaml .Values.securityContext | nindent 12 }}
+          image: "{{ .Values.image.repository }}:{{ .Values.image.tag | default .Chart.AppVersion }}"
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          command: ["sh", "-xc"]
+          args:
+            - python -m openeo_argoworkflows_api.worker
+          env:
+            - name: ALEMBIC_DIR
+              value: "{{ .Values.global.env.alembicDir }}"
+            - name: API_DNS
+              value: "{{ .Values.global.env.apiDns }}"
+            - name: API_TITLE
+              value: "{{ .Values.global.env.apiTitle }}"
+            - name: API_DESCRIPTION
+              value: "{{ .Values.global.env.apiDescription }}"
+            - name: OPENEO_EXECUTOR_IMAGE
+              value: "{{ .Values.global.env.executorImage }}"
+            - name: OPENEO_WORKSPACE_ROOT
+              value: "{{ .Values.global.env.workspaceRoot }}"
+            - name: OIDC_URL
+              value: "{{ .Values.global.env.oidcUrl }}"
+            - name: OIDC_ORGANISATION
+              value: "{{ .Values.global.env.odicOrganisation }}"
+            - name: OIDC_POLICIES
+              value: "{{ .Values.global.env.oidcPolicies }}"
+            - name: STAC_API_URL
+              value: "{{ .Values.global.env.stacCatalogueUrl }}"
+            - name: DASK_GATEWAY_SERVER
+              value: "http://traefik-openeo-dask-gateway.{{ .Release.Namespace }}.svc.cluster.local:80"
+            - name: DASK_WORKER_CORES
+              value: "{{ .Values.global.env.daskWorkerCores }}"
+            - name: DASK_WORKER_MEMORY
+              value: "{{ .Values.global.env.daskWorkerMemory }}"
+            - name: DASK_WORKER_LIMIT
+              value: "{{ .Values.global.env.daskWorkerLimit }}"
+            - name: DASK_CLUSTER_IDLE_TIMEOUT
+              value: "{{ .Values.global.env.daskClusterTimeout }}"
+            - name: ARGO_WORKFLOWS_SERVER
+              value: "http://openeo-argo-workflows-server.{{ .Release.Namespace }}.svc.cluster.local:2746"
+            - name: ARGO_WORKFLOWS_NAMESPACE
+              value: {{ .Release.Namespace }}
+            - name: ARGO_WORKFLOWS_TOKEN
+              valueFrom:
+                secretKeyRef:
+                  name: "openeo-argo-access-sa.service-account-token"
+                  key: token
+            - name: ARGO_WORKFLOWS_LIMIT
+              value: "10"
+            - name: REDIS_HOST
+              value: "openeo-redis-master.{{ .Release.Namespace }}.svc.cluster.local"
+            - name: REDIS_PORT
+              value: "6379" 
+            - name: POSTGRESQL_HOST
+              value: "openeo-postgresql-hl.{{ .Release.Namespace }}.svc.{{ .Values.postgresql.clusterDomain }}"
+            - name: POSTGRESQL_PORT
+              value: "{{ .Values.postgresql.service.ports.postgresql }}"
+            - name: POSTGRES_USER
+              value: {{ .Values.postgresql.auth.username | default "postgres"  | quote}}
+            - name: POSTGRES_DB
+              value: {{ .Values.postgresql.auth.database | default "postgres"  | quote}}
+            - name: POSTGRES_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: "openeo-postgresql"
+                  key: postgres-password
+          ports:
+            - name: http
+              containerPort: {{ .Values.service.port }}
+              protocol: TCP
+          livenessProbe:
+            {{- toYaml .Values.livenessProbe | nindent 12 }}
+            initialDelaySeconds: 60
+          readinessProbe:
+            {{- toYaml .Values.readinessProbe | nindent 12 }}
+            initialDelaySeconds: 90
+          resources:
+            {{- toYaml .Values.resources | nindent 12 }}
+          {{- with .Values.volumeMounts }}
+          volumeMounts:
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
+      {{- with .Values.volumes }}
+      volumes:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.nodeSelector }}
+      nodeSelector:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.affinity }}
+      affinity:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.tolerations }}
+      tolerations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+---
