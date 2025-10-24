@@ -43,20 +43,32 @@
         const yamlText = await resp.text();
         const index = jsyaml.load(yamlText);
 
-        const chartName = Object.keys(index.entries)[0];
-        const versions = index.entries[chartName];
+        chartListEl.innerHTML = '';
 
-        versions.forEach(entry => {
-          const version = entry.version;
-          const url = entry.urls[0];
-          const li = document.createElement('li');
-          const a = document.createElement('a');
-          a.href = url;
-          a.textContent = version;
-          li.appendChild(a);
-          chartListEl.appendChild(li);
-        });
+        for (const [chartName, versions] of Object.entries(index.entries)) {
+          const chartSection = document.createElement('div');
+          chartSection.classList.add('chart-section');
 
+          const chartTitle = document.createElement('h3');
+          chartTitle.textContent = chartName;
+          chartSection.appendChild(chartTitle);
+
+          const versionList = document.createElement('ul');
+
+          versions.forEach(entry => {
+            const version = entry.version;
+            const url = entry.urls[0];
+            const li = document.createElement('li');
+            const a = document.createElement('a');
+            a.href = url;
+            a.textContent = version;
+            li.appendChild(a);
+            versionList.appendChild(li);
+          });
+
+          chartSection.appendChild(versionList);
+          chartListEl.appendChild(chartSection);
+        }
       } catch (err) {
         chartListEl.innerHTML = `<li style="color:red">Failed to load chart versions: ${err}</li>`;
       }
