@@ -306,4 +306,19 @@ entries:
     urls:
     - wg-nginx-2025.10.1-rc1.tgz
     version: 2025.10.1-rc1
-generated: "2025-10-24T13:19:10.572076369Z"
+  - apiVersion: v2
+    appVersion: 1.16.0
+    created: "2025-10-27T08:58:57.762309256Z"
+    dependencies:
+    - name: wg-k8s
+      repository: https://serrichard.github.io/wg-k8s
+      version: 2025.10.1-rc6
+    description: A small helm chart which adds an nginx proxy infront of a wireguard
+      deployment.
+    digest: 933e96bb52b9851616fc241a949e63442441b3801526fcd74b189e523226e535
+    name: wg-nginx
+    type: application
+    urls:
+    - wg-nginx-2025.10.1-rc1.tgz
+    version: 2025.10.1-rc1
+generated: "2025-10-27T08:58:57.76234864Z"
