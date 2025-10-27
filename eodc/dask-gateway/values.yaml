@@ -2,7 +2,7 @@ dask-gateway:
   gateway:
     image:
       name: ghcr.io/eodcgmbh/container-images/dask-gateway-server-jwt
-      tag: 2025.8.0
+      tag: 2025.10.0
       pullPolicy: Always
     backend:
       image:
