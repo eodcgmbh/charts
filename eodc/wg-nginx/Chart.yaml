@@ -4,7 +4,7 @@ description: A small helm chart which adds an nginx proxy infront of a wireguard
 
 type: application
 
-version: 2025.10.1-rc1
+version: 2025.10.1-rc2
 
 appVersion: "1.16.0"
 dependencies:
