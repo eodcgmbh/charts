@@ -3,7 +3,7 @@ name: dask-gateway
 description: Dask Gateway service
 
 type: application
-version: 2025.10.2
+version: 2025.10.3
 
 appVersion: "2025.4.0"
 
