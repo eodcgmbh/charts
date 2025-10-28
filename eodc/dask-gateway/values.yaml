@@ -8,7 +8,7 @@ dask-gateway:
       image:
         pullPolicy: Always
     extraConfig: |
-      01-global-cluster-config: |
+      99-global-cluster-config: |
         import uuid
         from dask_gateway_server.backends.kubernetes import KubeBackend
 
