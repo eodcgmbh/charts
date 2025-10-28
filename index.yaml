@@ -25,6 +25,24 @@ entries:
   dask-gateway:
   - apiVersion: v2
     appVersion: 2025.4.0
+    created: "2025-10-28T09:43:27.847416557Z"
+    dependencies:
+    - name: dask-gateway
+      repository: https://helm.dask.org/
+      version: 2025.4.0
+    description: Dask Gateway service
+    digest: 4c42a6991f229427e72d9e7ded073c1dc51b04a8b77542d8e1107654085f8f15
+    maintainers:
+    - email: christoph.reimer@eodc.eu
+      name: Christoph Reimer
+      url: https://github.com/christophreimer
+    name: dask-gateway
+    type: application
+    urls:
+    - dask-gateway-2025.10.3.tgz
+    version: 2025.10.3
+  - apiVersion: v2
+    appVersion: 2025.4.0
     created: "2025-10-27T13:51:55.959320177Z"
     dependencies:
     - name: dask-gateway
@@ -369,4 +387,4 @@ entries:
     urls:
     - wg-nginx-2025.10.1-rc1.tgz
     version: 2025.10.1-rc1
-generated: "2025-10-27T13:51:55.959375199Z"
+generated: "2025-10-28T09:43:27.84747656Z"
