@@ -4,10 +4,10 @@ description: A small helm chart which adds an nginx proxy infront of a wireguard
 
 type: application
 
-version: 2025.10.1-rc4
+version: 2025.10.1-rc5
 
 appVersion: "1.16.0"
 dependencies:
 - name: wg-k8s
-  version: 2025.10.1-rc8
+  version: 2025.10.1-rc10
   repository: "https://serrichard.github.io/wg-k8s"
