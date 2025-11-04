@@ -1,0 +1,10 @@
+image:
+  repository: ghcr.io/eodcgmbh/coverage_maps
+  tag: latest
+  pullPolicy: IfNotPresent
+
+service:
+  name: stac-pg
+  externalName: 10.10.15.127
+  port: 5000
+  targetPort: 5000
