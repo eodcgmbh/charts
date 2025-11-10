@@ -18,7 +18,7 @@ spec:
   type: ExternalName
   externalName: {{ .Values.stac.service.externalName }}
   ports:
-    - port: {{ .Valuess.stac.service.port }}
+    - port: {{ .Values.stac.service.port }}
       targetPort: {{ .Values.stac.service.port }}
       protocol: TCP
 ---
