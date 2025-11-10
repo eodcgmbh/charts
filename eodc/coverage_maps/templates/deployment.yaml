@@ -26,19 +26,14 @@ spec:
                 secretKeyRef:
                   name: coverage-map-db-secret
                   key: DB_HOST
-            - name: DB_NAME
-              valueFrom:
-                secretKeyRef:
-                  name: coverage-map-db-secret
-                  key: DB_NAME
             - name: DB_USER
               valueFrom:
                 secretKeyRef:
                   name: coverage-map-db-secret
                   key: DB_USER
-            - name: DB_PASS
+            - name: DB_PASSWORD
               valueFrom:
                 secretKeyRef:
                   name: coverage-map-db-secret
-                  key: DB_PASS
+                  key: DB_PASSWORD
 
