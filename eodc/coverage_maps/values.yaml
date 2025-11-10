@@ -3,6 +3,10 @@ image:
   tag: 2025.11.1
   pullPolicy: IfNotPresent
 
+service:
+  name: coverage-maps
+  port: 4000
+
 ingress:
   enabled: true
   className: "apisix"
