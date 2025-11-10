@@ -18,7 +18,7 @@ spec:
             pathType: {{ .pathType | quote }}
             backend:
               service:
-                name: {{ $.Values.service.name }}
+                name: {{ include "coverage-map.fullname" . }}
                 port:
                   number: {{ $.Values.service.port }}
           {{- end }}
