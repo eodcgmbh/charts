@@ -36,4 +36,3 @@ spec:
                 secretKeyRef:
                   name: coverage-map-db-secret
                   key: DB_PASSWORD
-
