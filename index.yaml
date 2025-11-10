@@ -14,6 +14,16 @@ entries:
   coverage-map:
   - apiVersion: v2
     appVersion: 2025.11.1
+    created: "2025-11-10T13:13:33.905690536Z"
+    description: A Helm chart for the Coverage Map app
+    digest: 6163a90fe00d51dc9a05b26149b89680ae0fc1b7587040eb5003936d4ff4f3a4
+    name: coverage-map
+    type: application
+    urls:
+    - coverage-map-2025.11.11.tgz
+    version: 2025.11.11
+  - apiVersion: v2
+    appVersion: 2025.11.1
     created: "2025-11-10T13:09:36.723241887Z"
     description: A Helm chart for the Coverage Map app
     digest: 84e71085d71d33792f490d6f482d2d44e41ac9ce04d8c042111ab3f2a5a1846a
@@ -528,4 +538,4 @@ entries:
     urls:
     - wg-nginx-2025.10.1-rc1.tgz
     version: 2025.10.1-rc1
-generated: "2025-11-10T13:09:36.723401194Z"
+generated: "2025-11-10T13:13:33.905800703Z"
