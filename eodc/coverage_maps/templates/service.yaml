@@ -10,6 +10,8 @@ spec:
       targetPort: {{ .Values.service.port }}
       protocol: TCP
       name: http
+  selector:
+    app: {{ include "coverage-map.name" . }} 
 ---
 apiVersion: v1
 kind: Service
