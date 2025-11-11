@@ -10,6 +10,7 @@ metadata:
   annotations:
     kubernetes.io/ingress.class: {{ .Values.ingress.className | quote }}
 spec:
+  ingressClassName: apisix
   rules:
     {{- range .Values.ingress.hosts }}
     - host: {{ .host | quote }}
