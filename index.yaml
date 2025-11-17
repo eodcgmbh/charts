@@ -312,6 +312,30 @@ entries:
     urls:
     - dask-gateway-0.1.0.tgz
     version: 0.1.0
+  jupyter-enterprise-gateway:
+  - apiVersion: v2
+    appVersion: 3.2.3
+    created: "2025-11-17T14:23:09.336820023Z"
+    dependencies:
+    - name: enterprise-gateway
+      repository: oci://registry.central.data.destination-earth.eu/stack-helm-charts
+      version: 3.2.3
+    - name: apisix
+      repository: https://charts.apiseven.com
+      version: 2.10.0
+    description: A Helm chart for Kubernetes
+    digest: 992d62478f33f82107613cd24c5b4fea146463ce8bfb0232ec6d2fe1a542fd32
+    maintainers:
+    - email: christoph.reimer@eodc.eu
+      name: Christoph Reimer
+      url: https://github.com/christophreimer
+    name: jupyter-enterprise-gateway
+    sources:
+    - https://github.com/jupyter-server/enterprise_gateway
+    type: application
+    urls:
+    - jupyter-enterprise-gateway-0.1.0.tgz
+    version: 0.1.0
   jupyterhub:
   - apiVersion: v2
     appVersion: 5.3.0
@@ -588,4 +612,4 @@ entries:
     urls:
     - wg-nginx-2025.10.1-rc1.tgz
     version: 2025.10.1-rc1
-generated: "2025-11-17T14:07:53.95869883Z"
+generated: "2025-11-17T14:23:09.336919618Z"
