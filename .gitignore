@@ -172,5 +172,6 @@ notebooks/
 tmp/
 .tmp/
 testing/
+eodc/coverage_maps/values_test.yaml
 
 .*.yaml
