@@ -1,0 +1,34 @@
+---
+domainname:
+  jupyterhub: 
+  public:
+
+jupyterhub:
+  auth:
+    user: jeg-user
+    password: 
+
+certs:
+  clusterissuer:
+
+apisix:
+  etcd:
+    enabled: False
+  dashboard:
+    enabled: False
+  apisix:
+    deployment:
+      mode: standalone
+      role: data_plane
+
+enterprise-gateway:
+  deployment:
+    extraEnv: { EG_MAX_KERNELS_PER_USER: "20" }
+
+  kernel:
+    shareGatewayNamespace: True
+    allowedKernels:
+      - python_kubernetes
+      - python_tf_kubernetes
+      - r_kubernetes
+
