@@ -5,6 +5,9 @@ metadata:
   annotations:
     "helm.sh/hook": pre-install,pre-upgrade
     "helm.sh/hook-delete-policy": before-hook-creation
+    {{- with .Values.apisix.cmapAnnotations }}
+      {{- . | toYaml | nindent 4 }}
+    {{- end }}
 data:
   apisix.yaml: |
     consumers:

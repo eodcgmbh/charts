@@ -12,6 +12,7 @@ certs:
   clusterissuer:
 
 apisix:
+  cmapAnnotations: {}
   etcd:
     enabled: False
   dashboard:
