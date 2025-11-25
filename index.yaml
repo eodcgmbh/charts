@@ -322,6 +322,30 @@ entries:
     urls:
     - dask-gateway-0.1.0.tgz
     version: 0.1.0
+  eodag-server:
+  - apiVersion: v2
+    appVersion: latest
+    created: "2025-11-25T14:40:54.841225346Z"
+    dependencies:
+    - name: common
+      repository: oci://registry-1.docker.io/bitnamicharts
+      tags:
+      - bitnami-common
+      version: 2.x.x
+    description: EODAG (Earth Observation Data Access Gateway) is a tool for searching,
+      aggregating results and downloading remote sensed images offering a unified
+      API for data access regardless of the data provider. This chart deploys EODC's
+      custom EODAG server implementation with DEIMS OARec plugin support.
+    digest: 2f0cce46cc945c3740db03b1ac27b056a8a9e4f8b0160aa4fd994ce5b6f8afb6
+    home: https://git.eodc.eu/eodc/eodag-server
+    icon: https://raw.githubusercontent.com/CS-SI/eodag/master/docs/_static/eodag_bycs.png
+    name: eodag-server
+    sources:
+    - https://git.eodc.eu/eodc/eodag-server
+    type: application
+    urls:
+    - eodag-server-0.1.0.tgz
+    version: 0.1.0
   jupyter-enterprise-gateway:
   - apiVersion: v2
     appVersion: 3.2.3
@@ -645,4 +669,4 @@ entries:
     urls:
     - wg-nginx-2025.10.1-rc1.tgz
     version: 2025.10.1-rc1
-generated: "2025-11-17T15:15:26.655162771Z"
+generated: "2025-11-25T14:40:54.841336863Z"
