@@ -1,4 +1,3 @@
----
 binderhub-service:
   networkPolicy:
     enabled: false
@@ -15,34 +14,6 @@ jupyterhub:
     image:
       name: ghcr.io/eodcgmbh/fancy_jhub
       tag: latest
-
-    extraConfig:
-      00-enable-fancy-profiles: |
-        from jupyterhub_fancy_profiles import setup_ui
-        setup_ui(c)
-      00-idle-culler: |
-        c.JupyterHub.load_roles.append({
-                "name": "jupyterhub-idle-culler-role",
-                "scopes": [
-                    "list:users",
-                    "read:users:activity",
-                    "read:servers",
-                    "delete:servers",
-                    # "admin:users", # if using --cull-users
-                ],
-                # assignment of role's permissions to:
-                "services": ["jupyterhub-idle-culler-service"],
-            }
-        )
-        c.JupyterHub.services.append({
-                "name": "jupyterhub-idle-culler-service",
-                "command": [
-                    sys.executable,
-                    "-m", "jupyterhub_idle_culler",
-                    "--timeout=600"
-                ],
-            }
-        )
 
     config:
       BinderSpawner:

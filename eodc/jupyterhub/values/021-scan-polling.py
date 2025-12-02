@@ -55,7 +55,7 @@ async def modify_pod_hook(spawner, pod):
         decoded = json.loads(response.content.decode("utf-8"))[0]
 
         if "scan_overview" in decoded:
-            status = decodedw["scan_overview"][key]["scan_status"]
+            status = decoded["scan_overview"][key]["scan_status"]
         else:
             status = "Unscanned"
 
