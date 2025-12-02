@@ -406,6 +406,23 @@ entries:
   jupyterhub:
   - apiVersion: v2
     appVersion: 5.3.0
+    created: "2025-12-02T09:59:32.712652121Z"
+    dependencies:
+    - name: binderhub-service
+      repository: https://2i2c.org/binderhub-service
+      version: 0.1.0-0.dev.git.316.h27f15f4
+    - name: jupyterhub
+      repository: https://hub.jupyter.org/helm-chart/
+      version: 4.2.0
+    description: JupyterHub service
+    digest: c8a437b60bd725af5060fb4b0cc6f6323f55582d5c9e0461084a2055fabc22f0
+    name: jupyterhub
+    type: application
+    urls:
+    - jupyterhub-2025.12.1.tgz
+    version: 2025.12.1
+  - apiVersion: v2
+    appVersion: 5.3.0
     created: "2025-10-24T12:56:59.575144906Z"
     dependencies:
     - name: binderhub-service
@@ -679,4 +696,4 @@ entries:
     urls:
     - wg-nginx-2025.10.1-rc1.tgz
     version: 2025.10.1-rc1
-generated: "2025-12-02T09:56:07.131301917Z"
+generated: "2025-12-02T09:59:32.712773826Z"
