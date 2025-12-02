@@ -23,6 +23,8 @@ spec:
               containerPort: {{ .Values.service.port }}
               protocol: TCP
           env:
+            - name: API_BASE_URL
+              value: {{ .Values.env.apiBaseUrl | quote }}
             - name: DB_HOST
               valueFrom:
                 secretKeyRef:
