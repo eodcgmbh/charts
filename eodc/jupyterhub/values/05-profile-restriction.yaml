@@ -2,6 +2,7 @@ jupyterhub:
   hub:
     extraConfig:
       05-profile-restriction: |
+        
         # Re-assignes c.KubeSpawner.profile_list to a callable that filters the
         # initial configuration of profile_list based on the user's github
         # org/team membership as declared via "allowed_groups" read from
@@ -48,12 +49,12 @@ jupyterhub:
             # Eventually this can be removed, as the user's teams can be set to be groups
             # once https://github.com/jupyterhub/oauthenticator/pull/735 is merged
             if isinstance(spawner.authenticator, GitHubOAuthenticator):
-                # Ensure auth_state is populated with teams info
-                auth_state = await spawner.user.get_auth_state()
-                if not auth_state or "teams" not in auth_state:
-                    print(f"User {spawner.user.name} does not have any auth_state set, profile_list filtering not available")
+              # Ensure auth_state is populated with teams info
+              auth_state = await spawner.user.get_auth_state()
+              if not auth_state or "teams" not in auth_state:
+                  print(f"User {spawner.user.name} does not have any auth_state set, profile_list filtering not available")
         
-                else:
+              else:
                 # casefold teams to match what GitHub's API does when doing authorization calls
                 groups |= set([f'{team["organization"]["login"]}:{team["slug"]}'.casefold() for team in auth_state["teams"]])
         
@@ -67,41 +68,41 @@ jupyterhub:
         
                 # Handle `allowed_groups` specified in profile_options
                 if 'profile_options' in profile:
-                    for k, po in profile['profile_options'].items():
+                  for k, po in profile['profile_options'].items():
         
                     # If `unlisted_choice` has an `allowed_groups` and the current
                     # user is not present in any of those teams, we delete the
                     # `unlisted_choice` config entirely for this option. The user
                     # will then not be allowed to 'write in' a value.
                     if 'unlisted_choice' in po:
-                        if 'allowed_groups' in po['unlisted_choice']:
+                      if 'allowed_groups' in po['unlisted_choice']:
                         if not (set(po['unlisted_choice']['allowed_groups']) and groups):
-                            del po['unlisted_choice']
+                          del po['unlisted_choice']
         
                     if 'choices' in po:
-                        new_choices = {}
-                        for k, c in po['choices'].items():
+                      new_choices = {}
+                      for k, c in po['choices'].items():
                         # If `allowed_groups` is not set for a profile option, it is automatically
                         # allowed for everyone
                         if 'allowed_groups' not in c:
-                            new_choices[k] = c
+                          new_choices[k] = c
                         # If `allowed_groups` *is* set for a profile option, it is allowed only for
                         # members of that team.
                         else:
-                            allowed_groups = set([g.casefold() for g in c['allowed_groups']])
-                            if allowed_groups & groups:
+                          allowed_groups = set([g.casefold() for g in c['allowed_groups']])
+                          if allowed_groups & groups:
                             new_choices[k] = c
-                        po['choices'] = new_choices
+                      po['choices'] = new_choices
         
                 if 'allowed_groups' not in profile:
-                    allowed_profiles.append(profile)
+                  allowed_profiles.append(profile)
                 else:
-                    allowed_groups = set([g.casefold() for g in profile.get("allowed_groups", [])])
+                  allowed_groups = set([g.casefold() for g in profile.get("allowed_groups", [])])
         
-                    if allowed_groups & groups:
-                        print(f"Allowing profile {profile['display_name']} for user {spawner.user.name} based on team membership")
-                        allowed_profiles.append(profile)
-                        continue
+                  if allowed_groups & groups:
+                      print(f"Allowing profile {profile['display_name']} for user {spawner.user.name} based on team membership")
+                      allowed_profiles.append(profile)
+                      continue
         
             if len(allowed_profiles) == 0:
                 # If no profiles are allowed, user should not be able to spawn anything!
@@ -127,6 +128,6 @@ jupyterhub:
             # We pass in a copy of the original profile_list set in config via partial, to reduce possible variable
             # capture related issues.
             c.KubeSpawner.profile_list = partial(
-                profile_list_allowed_groups_filter,
-                deepcopy(c.KubeSpawner.profile_list)
+              profile_list_allowed_groups_filter,
+              deepcopy(c.KubeSpawner.profile_list)
             )
