@@ -2,7 +2,7 @@ apiVersion: v2
 name: jupyter-enterprise-gateway
 description: Jupyter enterprise gateway behind apisix
 type: application
-version: 0.1.4
+version: 0.1.5
 appVersion: "3.2.3"
 maintainers:
   - name: Christoph Reimer
