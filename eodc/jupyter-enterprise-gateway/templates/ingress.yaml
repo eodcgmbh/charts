@@ -32,9 +32,9 @@ spec:
             pathType: Prefix
             backend:
               service:
-                name: apisix-gateway
+                name: {{ .Values.service.name }}
                 port:
-                  number: 80
+                  number: {{ .Values.service.port }}
   {{- if .Values.domainname.jupyterhub.tls}}
   tls:
     - hosts:
@@ -76,9 +76,9 @@ spec:
             pathType: Prefix
             backend:
               service:
-                name: apisix-gateway
+                name: {{ .Values.service.name }}
                 port:
-                  number: 80
+                  number: {{ .Values.service.port }}
   {{- if .Values.domainname.public.tls}}
   tls:
     - hosts:
