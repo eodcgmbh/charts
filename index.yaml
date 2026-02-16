@@ -359,6 +359,29 @@ entries:
   jupyter-enterprise-gateway:
   - apiVersion: v2
     appVersion: 3.2.3
+    created: "2026-02-16T20:26:10.109991755Z"
+    dependencies:
+    - name: enterprise-gateway
+      repository: oci://registry.central.data.destination-earth.eu/stack-helm-charts
+      version: 3.2.3
+    - name: apisix
+      repository: https://charts.apiseven.com
+      version: 2.10.0
+    description: Jupyter enterprise gateway behind apisix
+    digest: 686bf374ad7aca90d2a0ac66a7e79908f31238a20c9b0059f70fa1b55d1bf9bd
+    maintainers:
+    - email: christoph.reimer@eodc.eu
+      name: Christoph Reimer
+      url: https://github.com/christophreimer
+    name: jupyter-enterprise-gateway
+    sources:
+    - https://github.com/jupyter-server/enterprise_gateway
+    type: application
+    urls:
+    - jupyter-enterprise-gateway-0.1.4.tgz
+    version: 0.1.4
+  - apiVersion: v2
+    appVersion: 3.2.3
     created: "2026-02-16T19:26:42.256172504Z"
     dependencies:
     - name: enterprise-gateway
@@ -719,4 +742,4 @@ entries:
     urls:
     - wg-nginx-2025.10.1-rc1.tgz
     version: 2025.10.1-rc1
-generated: "2026-02-16T19:26:42.519580622Z"
+generated: "2026-02-16T20:26:10.110127268Z"
