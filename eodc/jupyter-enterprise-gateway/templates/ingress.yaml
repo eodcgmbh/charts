@@ -25,7 +25,7 @@ metadata:
         }
 spec:
   rules:
-    - host: {{ .Values.domainname.jupyterhub }}
+    - host: {{ .Values.domainname.jupyterhub.url }}
       http:
         paths:
           - path: /
@@ -35,10 +35,12 @@ spec:
                 name: apisix-gateway
                 port:
                   number: 80
+  {{- if .Values.domainname.jupyterhub.tls}}
   tls:
     - hosts:
-        - {{ .Values.domainname.jupyterhub }}
+        - {{ .Values.domainname.jupyterhub.url }}
       secretName: jeg-jupyterhub-tls
+  {{- end}}
 ---
 apiVersion: networking.k8s.io/v1
 kind: Ingress
@@ -67,7 +69,7 @@ metadata:
         }
 spec:
   rules:
-    - host: {{ .Values.domainname.public }}
+    - host: {{ .Values.domainname.public.url }}
       http:
         paths:
           - path: /
@@ -77,7 +79,9 @@ spec:
                 name: apisix-gateway
                 port:
                   number: 80
+  {{- if .Values.domainname.public.tls}}
   tls:
     - hosts:
-        - {{ .Values.domainname.public }}
+        - {{ .Values.domainname.public.url }}
       secretName: public-jeg-tls
+  {{- end}}

@@ -1,7 +1,11 @@
 ---
 domainname:
-  jupyterhub: 
+  jupyterhub:
+    url:
+    tls:
   public:
+    url:
+    tls:
 
 jupyterhub:
   auth:
