@@ -155,14 +155,14 @@ data:
     - 
       uri: /*
       name: dedl-kernels
-      host: {{ .Values.domainname.public }}
+      host: {{ .Values.domainname.public.url }}
       enable_websocket: true
       upstream_id: 2
       plugin_config_id: 4
     - 
       uri: /api/kernels
       name: dedl-kernels-quota
-      host: {{ .Values.domainname.public }}
+      host: {{ .Values.domainname.public.url }}
       enable_websocket: true
       upstream_id: 2
       plugin_config_id: 5
@@ -171,7 +171,7 @@ data:
     -
       uri: /*
       name: dedl-kernels-jupyterhub
-      host: {{ .Values.domainname.jupyterhub }}
+      host: {{ .Values.domainname.jupyterhub.url }}
       enable_websocket: true
       upstream_id: 2
       plugins:
