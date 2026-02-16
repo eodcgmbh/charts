@@ -15,6 +15,10 @@ jupyterhub:
 certs:
   clusterissuer:
 
+service:
+  name: apisix-gateway
+  port: 80
+
 apisix:
   cmapAnnotations: {}
   etcd:
