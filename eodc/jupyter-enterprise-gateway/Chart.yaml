@@ -2,7 +2,7 @@ apiVersion: v2
 name: jupyter-enterprise-gateway
 description: Jupyter enterprise gateway behind apisix
 type: application
-version: 0.1.5
+version: 0.2.0
 appVersion: "3.2.3"
 maintainers:
   - name: Christoph Reimer
@@ -15,6 +15,6 @@ dependencies:
     version: "3.2.3"
     repository: oci://registry.central.data.destination-earth.eu/stack-helm-charts
   - name: apisix
-    version: "2.10.0"
+    version: "2.12.6"
     repository: https://charts.apiseven.com
   
