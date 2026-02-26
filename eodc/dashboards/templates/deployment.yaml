@@ -41,10 +41,10 @@ spec:
               containerPort: {{ .Values.service.port }}
               protocol: TCP
           {{- if .Values.command }}
-          command: {{ toYaml .Values.command | nindent 6 }}
+          command: {{ toYaml .Values.command | nindent 12 }}
           {{- end }}
           {{- if .Values.args }}
-          args: {{ toYaml .Values.args | nindent 6 }}
+          args: {{ toYaml .Values.args | nindent 12 }}
           {{- end }}
           livenessProbe:
             {{- toYaml .Values.livenessProbe | nindent 12 }}
