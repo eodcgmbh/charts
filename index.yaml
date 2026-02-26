@@ -204,6 +204,16 @@ entries:
     version: 0.1.0
   dashboards:
   - apiVersion: v2
+    created: "2026-02-26T16:06:31.811557536Z"
+    description: Basic helm chart for K8s for making the deployment of dashboards
+      at EODC easier.
+    digest: 112123184b3e2a240d6b7d327e4b3d7880c0745ce73fa027c1300a996b8fffb6
+    name: dashboards
+    type: application
+    urls:
+    - dashboards-2026.2.1-rc1.tgz
+    version: 2026.2.1-rc1
+  - apiVersion: v2
     created: "2025-10-24T10:53:49.899361751Z"
     description: Basic helm chart for K8s for making the deployment of dashboards
       at EODC easier.
@@ -788,4 +798,4 @@ entries:
     urls:
     - wg-nginx-2025.10.1-rc1.tgz
     version: 2025.10.1-rc1
-generated: "2026-02-16T21:48:12.248292279Z"
+generated: "2026-02-26T16:06:31.811701617Z"
