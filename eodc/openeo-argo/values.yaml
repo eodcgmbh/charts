@@ -48,8 +48,13 @@ podAnnotations: {}
 podLabels: {}
 
 persistence:
-    
-    existingVolume: ""
+
+    existingClaim: ""
+
+    storageClassName: ""
+
+    accessModes:
+      - ReadWriteOnce
 
     capacity: "8Gi"
 

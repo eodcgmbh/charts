@@ -1,3 +1,4 @@
+{{- if not .Values.persistence.existingClaim }}
 ---
 apiVersion: v1
 kind: PersistentVolumeClaim
@@ -6,8 +7,14 @@ metadata:
   namespace: {{ .Release.Namespace }}
 spec:
   accessModes:
-  - ReadWriteOnce
+  {{- range .Values.persistence.accessModes }}
+  - {{ . }}
+  {{- end }}
+  {{- if .Values.persistence.storageClassName }}
+  storageClassName: {{ .Values.persistence.storageClassName | quote }}
+  {{- end }}
   resources:
     requests:
-      storage: {{ .Values.persistence.capacity | quote }}   
+      storage: {{ .Values.persistence.capacity | quote }}
 ---
+{{- end }}
