@@ -59,7 +59,7 @@ spec:
           command: ['sh', '-c', 'chown -R 1000:1000 {{ .Values.global.env.workspaceRoot }}']
           volumeMounts:
             - name: workspace-mount
-              mountPath: "{{ .Values.global.env.workspaceRoot }}"
+              mountPath: "{{ .Values.persistence.mountPath }}"
         {{- end}}
 
         - name: {{ .Chart.Name }}-wait-on-postgres
@@ -157,7 +157,7 @@ spec:
                   key: postgres-password
           volumeMounts:
             - name: workspace-mount
-              mountPath: "{{ .Values.global.env.workspaceRoot }}"
+              mountPath: "{{ .Values.persistence.mountPath }}"
 
 
         - name: {{ .Chart.Name }}-queue-worker
