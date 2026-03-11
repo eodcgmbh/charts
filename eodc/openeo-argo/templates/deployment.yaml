@@ -114,6 +114,8 @@ spec:
               value: "{{ .Values.global.env.workspaceRoot }}"
             - name: OPENEO_WORKSPACE_CLAIMNAME
               value: {{ .Values.persistence.existingVolume | default "openeo-workspace" }}
+            - name: OPENEO_WORKSPACE_SECURITY_GROUP
+              value: {{ .Values.persistence.fsGroup | default 1000 | quote }}
             - name: OPENEO_EXECUTOR_IMAGE
               value: "{{ .Values.global.env.executorImage }}"
             - name: OPENEO_SIGN_KEY
@@ -185,6 +187,8 @@ spec:
               value: "{{ .Values.global.env.workspaceRoot }}"
             - name: OPENEO_WORKSPACE_CLAIMNAME
               value: {{ .Values.persistence.existingVolume | default "openeo-workspace" }}
+            - name: OPENEO_WORKSPACE_SECURITY_GROUP
+              value: {{ .Values.persistence.fsGroup | default 1000 | quote }}
             - name: OIDC_URL
               value: "{{ .Values.global.env.oidcUrl }}"
             - name: OIDC_ORGANISATION

@@ -51,7 +51,9 @@ persistence:
     
     existingVolume: ""
 
-    mountPath: ""
+    fsGroup: 1000
+
+    mountPath: "/"
 
     storageClassName: "microk8s-hostpath"
 
