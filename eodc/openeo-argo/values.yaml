@@ -51,6 +51,8 @@ persistence:
     
     existingVolume: ""
 
+    mountPath: ""
+
     storageClassName: "microk8s-hostpath"
 
     capacity: "8Gi"
