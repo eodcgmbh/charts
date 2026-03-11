@@ -51,6 +51,8 @@ persistence:
     
     existingVolume: ""
 
+    storageClassName: "microk8s-hostpath"
+
     capacity: "8Gi"
 
 podSecurityContext: {}
@@ -135,6 +137,9 @@ affinity: {}
 postgresql:
 
   enabled: true
+
+  auth:
+    existingSecret: "openeo-postgresql"
 
   image:
     repository: bitnamilegacy/postgresql
