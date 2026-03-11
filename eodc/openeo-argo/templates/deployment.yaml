@@ -53,12 +53,14 @@ spec:
           claimName: {{ .Values.persistence.existingVolume | default "openeo-workspace" }}
 
       initContainers:
+        {{- if not .Values.persistence.existingVolume }}
         - name: {{ .Chart.Name }}-volume-permissions
           image: busybox
           command: ['sh', '-c', 'chown -R 1000:1000 {{ .Values.global.env.workspaceRoot }}']
           volumeMounts:
             - name: workspace-mount
               mountPath: "{{ .Values.global.env.workspaceRoot }}"
+        {{- end}}
 
         - name: {{ .Chart.Name }}-wait-on-postgres
           image: bitnami/kubectl:latest
