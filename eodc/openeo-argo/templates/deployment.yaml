@@ -50,7 +50,7 @@ spec:
       volumes:
       - name: workspace-mount
         persistentVolumeClaim:
-          claimName: openeo-workspace
+          claimName: {{ .Values.persistence.existingVolume | default "openeo-workspace" }}
 
       initContainers:
         - name: {{ .Chart.Name }}-volume-permissions
