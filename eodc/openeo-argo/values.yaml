@@ -51,7 +51,7 @@ podLabels: {}
 persistence:
     
     existingVolume:
-      enabled: true
+      enabled: false
       name: ""
       fsGroup: 1000
 
