@@ -50,16 +50,16 @@ spec:
       volumes:
       - name: workspace-mount
         persistentVolumeClaim:
-          claimName: {{ .Values.persistence.existingVolume | default "openeo-workspace" }}
+          claimName: {{ .Values.persistence.existingVolume.name | default "openeo-workspace" }}
 
       initContainers:
-        {{- if not .Values.persistence.existingVolume }}
+        {{- if not .Values.persistence.existingVolume.enabled }}
         - name: {{ .Chart.Name }}-volume-permissions
           image: busybox
           command: ['sh', '-c', 'chown -R 1000:1000 {{ .Values.global.env.workspaceRoot }}']
           volumeMounts:
             - name: workspace-mount
-              mountPath: "{{ .Values.persistence.mountPath }}"
+              mountPath: "{{ .Values.global.env.workspaceMount }}"
         {{- end}}
 
         - name: {{ .Chart.Name }}-wait-on-postgres
@@ -113,9 +113,9 @@ spec:
             - name: OPENEO_WORKSPACE_ROOT
               value: "{{ .Values.global.env.workspaceRoot }}"
             - name: OPENEO_WORKSPACE_CLAIMNAME
-              value: {{ .Values.persistence.existingVolume | default "openeo-workspace" }}
+              value: {{ .Values.persistence.existingVolume.name | default "openeo-workspace" }}
             - name: OPENEO_WORKSPACE_SECURITY_GROUP
-              value: {{ .Values.persistence.fsGroup | default 1000 | quote }}
+              value: {{ .Values.persistence.existingVolume.fsGroup | default 1000 | quote }}
             - name: OPENEO_EXECUTOR_IMAGE
               value: "{{ .Values.global.env.executorImage }}"
             - name: OPENEO_SIGN_KEY
@@ -161,7 +161,7 @@ spec:
                   key: postgres-password
           volumeMounts:
             - name: workspace-mount
-              mountPath: "{{ .Values.persistence.mountPath }}"
+              mountPath: "{{ .Values.global.env.workspaceMount }}"
 
 
         - name: {{ .Chart.Name }}-queue-worker
@@ -186,9 +186,9 @@ spec:
             - name: OPENEO_WORKSPACE_ROOT
               value: "{{ .Values.global.env.workspaceRoot }}"
             - name: OPENEO_WORKSPACE_CLAIMNAME
-              value: {{ .Values.persistence.existingVolume | default "openeo-workspace" }}
+              value: {{ .Values.persistence.existingVolume.name | default "openeo-workspace" }}
             - name: OPENEO_WORKSPACE_SECURITY_GROUP
-              value: {{ .Values.persistence.fsGroup | default 1000 | quote }}
+              value: {{ .Values.persistence.existingVolume.fsGroup | default 1000 | quote }}
             - name: OIDC_URL
               value: "{{ .Values.global.env.oidcUrl }}"
             - name: OIDC_ORGANISATION

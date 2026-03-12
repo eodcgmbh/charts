@@ -22,7 +22,6 @@ microk8s helm dependency build
 microk8s helm upgrade --install openeo -n test -f values.yaml .
 ```
 
-
 ## Parameters
 
 ### Deployment values
@@ -38,15 +37,20 @@ microk8s helm upgrade --install openeo -n test -f values.yaml .
 | global.env.odicOrganisation   | Organisation for OpenID Connect authentication        |  "egi"   |
 | global.env.oidcPolicies       | Policies for OpenID Connect authorization             |    ""  |
 | global.env.stacCatalogueUrl   | URL for STAC catalogue                                |   "https://stac.eodc.eu/api/v1"    |
-| global.env.workspaceRoot      | Root directory for user workspaces                    |   "/user_workspaces"    |
-| global.env.executorImage      | Image for the executor                                |   "ghcr.io/eodcgmbh/openeo-argoworkflows:executor-2025.5.1"    |
+| global.env.workspaceRoot      | Root directory for user workspaces                    |   "/user_workspaces/jobs"    |
+| global.env.workspaceMount      | The mount path for the volume where the user workspaces are stored  |   "/user_workspaces"    |
+| global.env.executorImage      | Image for the executor                                |   "ghcr.io/eodcgmbh/openeo-argoworkflows:executor-2026.3.4"    |
 | global.env.daskWorkerCores      | Cores available to the dask worker                               |   "4"    |
 | global.env.daskWorkerMemory      | RAM available to the dask worker (in Gbs)                              |   "8"    |
 | global.env.daskWorkerLimit      | Maximum number of workers available per job.                              |   "6"    |
 | global.env.daskClusterTimeout      | How long an idle cluster can be left unused.                              |   "3600"    |
 | image.repository      | Image for the OpenEO Api                                |   "ghcr.io/eodcgmbh/openeo-argoworkflows"    |
-| image.tag      | Tag for the OpenEO Api                              | "api-2025.5.1"  |
-| persistence.existingVolume      | The name of an existing Persistent Volume Claim to be used for the OpenEO Workspace.  | **Currently unavailable**  |
+| image.tag      | Tag for the OpenEO Api                              | "api-2026.3.11"  |
+| persistence.existingVolume      | existingVolume is a map used to define configurable values in the deployment. If not set, a pvc will be created by the chart.  | "" |
+| persistence.existingVolume.enabled      | Whether the existingVolume map should be used. | false  |
+| persistence.existingVolume.name      | The name of an existing Persistent Volume Claim to be used for the OpenEO Workspace. If used, both persistence.storageClassName and persistence.capacity will be ignored. | ""  |
+| persistence.fsGroup      |   The fsGroup to be used for the security context for the existing volume.  | 1000 |
+| persistence.storageClassName      |   The storage class to be used when creating the persistent volume. | "microk8s-hostpath" |
 | persistence.capacity      |   The size of the Persistent Volume Claim to be used for the OpenEO Workspace        | "8Gi"  |
 
 #### Example: global.env.oidcPolicies

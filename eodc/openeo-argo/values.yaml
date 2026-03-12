@@ -12,8 +12,9 @@ global:
     odicOrganisation: "egi"
     oidcPolicies: ""
     stacCatalogueUrl: "https://stac.eodc.eu/api/v1"
-    workspaceRoot: "/user_workspaces"
-    executorImage: "ghcr.io/eodcgmbh/openeo-argoworkflows:executor-2026.3.1"
+    workspaceRoot: "/user_workspace/jobs"
+    workspaceMount: "/user_workspace"
+    executorImage: "ghcr.io/eodcgmbh/openeo-argoworkflows:executor-2026.3.4"
     daskWorkerCores: "4"
     daskWorkerMemory: "8"
     daskWorkerLimit: "6"
@@ -27,7 +28,7 @@ image:
   repository: ghcr.io/eodcgmbh/openeo-argoworkflows
   pullPolicy: IfNotPresent
   # Overrides the image tag whose default is the chart appVersion.
-  tag: "api-2026.3.1"
+  tag: "api-2026.3.11"
 
 imagePullSecrets: []
 nameOverride: ""
@@ -49,11 +50,10 @@ podLabels: {}
 
 persistence:
     
-    existingVolume: ""
-
-    fsGroup: 1000
-
-    mountPath: "/"
+    existingVolume:
+      enabled: true
+      name: ""
+      fsGroup: 1000
 
     storageClassName: "microk8s-hostpath"
 
