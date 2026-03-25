@@ -1,4 +1,28 @@
 {{- if not .Values.persistence.existingVolume.enabled }}
+{{- if or .Values.persistence.nfs.enabled .Values.persistence.nfs.inCluster.enabled }}
+---
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: openeo-workspace
+spec:
+  capacity:
+    storage: {{ .Values.persistence.capacity | quote }}
+  accessModes:
+    - ReadWriteMany
+  persistentVolumeReclaimPolicy: Retain
+  storageClassName: ""
+  nfs:
+    {{- if .Values.persistence.nfs.inCluster.enabled }}
+    server: {{ printf "%s.%s.svc.cluster.local" .Values.persistence.nfs.inCluster.serverName .Release.Namespace | quote }}
+    path: {{ .Values.persistence.nfs.inCluster.exportPath | quote }}
+    readOnly: false
+    {{- else }}
+    server: {{ .Values.persistence.nfs.server | quote }}
+    path: {{ .Values.persistence.nfs.path | quote }}
+    readOnly: {{ .Values.persistence.nfs.readOnly }}
+    {{- end }}
+{{- end }}
 ---
 apiVersion: v1
 kind: PersistentVolumeClaim
@@ -6,13 +30,16 @@ metadata:
   name: openeo-workspace
   namespace: {{ .Release.Namespace }}
 spec:
-  {{- if not .Values.persistence.storageClassName }}
-  storageClassName: {{ .Values.persistence.storageClassName }}
+  {{- if or .Values.persistence.nfs.enabled .Values.persistence.nfs.inCluster.enabled }}
+  storageClassName: ""
+  volumeName: openeo-workspace
+  {{- else }}
+  storageClassName: {{ .Values.persistence.storageClassName | quote }}
   {{- end }}
   accessModes:
-  - ReadWriteMany
+    - ReadWriteMany
   resources:
     requests:
-      storage: {{ .Values.persistence.capacity | quote }}   
+      storage: {{ .Values.persistence.capacity | quote }}
 ---
 {{- end }}

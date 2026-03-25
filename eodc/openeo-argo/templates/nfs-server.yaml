@@ -1,0 +1,93 @@
+{{- if .Values.persistence.nfs.inCluster.enabled }}
+{{- $serverName := .Values.persistence.nfs.inCluster.serverName }}
+{{- $backingName := .Values.persistence.nfs.inCluster.backingName }}
+---
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: {{ $backingName }}
+  labels:
+    {{- include "openeo-argo.labels" . | nindent 4 }}
+spec:
+  capacity:
+    storage: {{ .Values.persistence.capacity | quote }}
+  accessModes:
+    - ReadWriteOnce
+  persistentVolumeReclaimPolicy: Retain
+  storageClassName: ""
+  csi:
+    driver: cinder.csi.openstack.org
+    volumeHandle: {{ .Values.persistence.nfs.inCluster.cinderVolumeId | quote }}
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: {{ $backingName }}
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "openeo-argo.labels" . | nindent 4 }}
+spec:
+  storageClassName: ""
+  volumeName: {{ $backingName }}
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: {{ .Values.persistence.capacity | quote }}
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ $serverName }}
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "openeo-argo.labels" . | nindent 4 }}
+    app.kubernetes.io/component: nfs-server
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: {{ $serverName }}
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: {{ $serverName }}
+    spec:
+      containers:
+        - name: nfs-server
+          image: {{ .Values.persistence.nfs.inCluster.image.repository }}:{{ .Values.persistence.nfs.inCluster.image.tag }}
+          env:
+            - name: SHARED_DIRECTORY
+              value: {{ .Values.persistence.nfs.inCluster.exportPath | quote }}
+          ports:
+            - name: nfs
+              containerPort: 2049
+              protocol: TCP
+          securityContext:
+            privileged: true
+          volumeMounts:
+            - name: nfs-backing
+              mountPath: {{ .Values.persistence.nfs.inCluster.exportPath | quote }}
+      volumes:
+        - name: nfs-backing
+          persistentVolumeClaim:
+            claimName: {{ $backingName }}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ $serverName }}
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "openeo-argo.labels" . | nindent 4 }}
+    app.kubernetes.io/component: nfs-server
+spec:
+  type: ClusterIP
+  selector:
+    app.kubernetes.io/name: {{ $serverName }}
+  ports:
+    - name: nfs
+      port: 2049
+      targetPort: nfs
+      protocol: TCP
+{{- end }}
