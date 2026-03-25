@@ -69,6 +69,8 @@ persistence:
         exportPath: "/exports"
         serverName: "openeo-nfs-server"
         backingName: "openeo-nfs-backing"
+        # Set clusterIP to bypass DNS and reference the NFS service IP directly in the PV
+        clusterIP: ""
         image:
           repository: itsthenetwork/nfs-server-alpine
           tag: "12"
