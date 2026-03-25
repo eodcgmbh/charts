@@ -83,6 +83,9 @@ metadata:
     app.kubernetes.io/component: nfs-server
 spec:
   type: ClusterIP
+  {{- if .Values.persistence.nfs.inCluster.clusterIP }}
+  clusterIP: {{ .Values.persistence.nfs.inCluster.clusterIP | quote }}
+  {{- end }}
   selector:
     app.kubernetes.io/name: {{ $serverName }}
   ports:
