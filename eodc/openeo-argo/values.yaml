@@ -49,11 +49,29 @@ podAnnotations: {}
 podLabels: {}
 
 persistence:
-    
+
     existingVolume:
       enabled: false
       name: ""
       fsGroup: 1000
+
+    nfs:
+      # Set enabled: true to use an existing external NFS server directly
+      enabled: false
+      server: ""
+      path: "/"
+      readOnly: false
+      # Set inCluster.enabled: true to deploy an NFS server inside the cluster
+      # backed by an OpenStack Cinder volume. Takes precedence over nfs.enabled.
+      inCluster:
+        enabled: false
+        cinderVolumeId: ""
+        exportPath: "/exports"
+        serverName: "openeo-nfs-server"
+        backingName: "openeo-nfs-backing"
+        image:
+          repository: itsthenetwork/nfs-server-alpine
+          tag: "12"
 
     storageClassName: "microk8s-hostpath"
 
