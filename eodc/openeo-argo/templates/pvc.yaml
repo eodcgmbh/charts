@@ -15,7 +15,7 @@ spec:
   nfs:
     {{- if .Values.persistence.nfs.inCluster.enabled }}
     server: {{ .Values.persistence.nfs.inCluster.clusterIP | default (printf "%s.%s.svc.cluster.local" .Values.persistence.nfs.inCluster.serverName .Release.Namespace) | quote }}
-    path: {{ .Values.persistence.nfs.inCluster.exportPath | quote }}
+    path: "/"
     readOnly: false
     {{- else }}
     server: {{ .Values.persistence.nfs.server | quote }}

@@ -60,7 +60,7 @@ spec:
             - sh
             - -c
             - |
-              chown {{ .Values.persistence.nfs.inCluster.uid }}:{{ .Values.persistence.nfs.inCluster.gid }} {{ .Values.persistence.nfs.inCluster.exportPath }}
+              chown -R {{ .Values.persistence.nfs.inCluster.uid }}:{{ .Values.persistence.nfs.inCluster.gid }} {{ .Values.persistence.nfs.inCluster.exportPath }}
               chmod 2775 {{ .Values.persistence.nfs.inCluster.exportPath }}
           securityContext:
             runAsUser: 0
