@@ -53,6 +53,20 @@ spec:
       labels:
         app.kubernetes.io/name: {{ $serverName }}
     spec:
+      initContainers:
+        - name: nfs-permission-fix
+          image: busybox
+          command:
+            - sh
+            - -c
+            - |
+              chown {{ .Values.persistence.nfs.inCluster.uid }}:{{ .Values.persistence.nfs.inCluster.gid }} {{ .Values.persistence.nfs.inCluster.exportPath }}
+              chmod 2775 {{ .Values.persistence.nfs.inCluster.exportPath }}
+          securityContext:
+            runAsUser: 0
+          volumeMounts:
+            - name: nfs-backing
+              mountPath: {{ .Values.persistence.nfs.inCluster.exportPath | quote }}
       containers:
         - name: nfs-server
           image: {{ .Values.persistence.nfs.inCluster.image.repository }}:{{ .Values.persistence.nfs.inCluster.image.tag }}
