@@ -1,4 +1,4 @@
-{{- if .Values.argoworkflows.enabled or .Values.argoworkflows.enableExtras }}
+{{- if or .Values.argoworkflows.enabled .Values.argoworkflows.enableExtras }}
 ---
 kind: Role
 apiVersion: rbac.authorization.k8s.io/v1
