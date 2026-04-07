@@ -181,7 +181,7 @@ postgresql:
 argoworkflows:
 
   enabled: true
-
+  enableExtras: true
   singleNamespace: true
 
 
