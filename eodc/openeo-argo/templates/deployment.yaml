@@ -123,9 +123,9 @@ spec:
             - name: STAC_API_URL
               value: "{{ .Values.global.env.stacCatalogueUrl }}"
             - name: ARGO_WORKFLOWS_SERVER
-              value: "http://openeo-argo-workflows-server.{{ .Release.Namespace }}.svc.cluster.local:2746"
+              value: {{ if .Values.argoworkflows.enabled }}"http://openeo-argo-workflows-server.{{ .Release.Namespace }}.svc.cluster.local:2746"{{ else }}"{{ .Values.argoworkflows.server }}"{{ end }}
             - name: ARGO_WORKFLOWS_NAMESPACE
-              value: {{ .Release.Namespace }}
+              value: {{ if .Values.argoworkflows.enabled }}{{ .Release.Namespace }}{{ else }}{{ .Values.argoworkflows.namespace }}{{ end }}
             - name: ARGO_WORKFLOWS_TOKEN
               valueFrom:
                 secretKeyRef:
@@ -199,9 +199,9 @@ spec:
             - name: DASK_CLUSTER_IDLE_TIMEOUT
               value: "{{ .Values.global.env.daskClusterTimeout }}"
             - name: ARGO_WORKFLOWS_SERVER
-              value: "http://openeo-argo-workflows-server.{{ .Release.Namespace }}.svc.cluster.local:2746"
+              value: {{ if .Values.argoworkflows.enabled }}"http://openeo-argo-workflows-server.{{ .Release.Namespace }}.svc.cluster.local:2746"{{ else }}"{{ .Values.argoworkflows.server }}"{{ end }}
             - name: ARGO_WORKFLOWS_NAMESPACE
-              value: {{ .Release.Namespace }}
+              value: {{ if .Values.argoworkflows.enabled }}{{ .Release.Namespace }}{{ else }}{{ .Values.argoworkflows.namespace }}{{ end }}
             - name: ARGO_WORKFLOWS_TOKEN
               valueFrom:
                 secretKeyRef:
