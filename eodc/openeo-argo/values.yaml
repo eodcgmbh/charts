@@ -184,6 +184,10 @@ argoworkflows:
   enableExtras: true
   singleNamespace: true
 
+  # Only used when enabled is false (external/unmanaged Argo Workflows instance)
+  server: ""
+  namespace: ""
+
 
 redis:
 
