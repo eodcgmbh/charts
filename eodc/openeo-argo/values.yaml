@@ -13,7 +13,7 @@ global:
     oidcPolicies: ""
     stacCatalogueUrl: "https://stac.eodc.eu/api/v1"
     workspaceRoot: "/user_workspace/jobs"
-    workspaceMount: "/user_workspace"
+    workspaceMount: &workspaceMount "/user_workspace"
     executorImage: "ghcr.io/eodcgmbh/openeo-argoworkflows:executor-2026.3.4"
     daskWorkerCores: "4"
     daskWorkerMemory: "8"
@@ -220,10 +220,10 @@ dask-gateway:
               persistentVolumeClaim:
                 claimName: openeo-workspace
 
-        extraContainerConfig: 
+        extraContainerConfig:
           volumeMounts:
             - name: user-workspace
-              mountPath: "/user_workspaces"
+              mountPath: *workspaceMount
 
 
     extraConfig: 
