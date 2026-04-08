@@ -103,6 +103,8 @@ spec:
               value: "{{ .Values.global.env.apiDescription }}"
             - name: OPENEO_WORKSPACE_ROOT
               value: "{{ .Values.global.env.workspaceRoot }}"
+            - name: OPENEO_WORKSPACE_MOUNT
+              value: "{{ .Values.global.env.workspaceMount }}"
             - name: OPENEO_WORKSPACE_CLAIMNAME
               value: {{ .Values.persistence.existingVolume.name | default "openeo-workspace" }}
             - name: OPENEO_WORKSPACE_SECURITY_GROUP
@@ -176,6 +178,8 @@ spec:
               value: "{{ .Values.global.env.executorImage }}"
             - name: OPENEO_WORKSPACE_ROOT
               value: "{{ .Values.global.env.workspaceRoot }}"
+            - name: OPENEO_WORKSPACE_MOUNT
+              value: "{{ .Values.global.env.workspaceMount }}"
             - name: OPENEO_WORKSPACE_CLAIMNAME
               value: {{ .Values.persistence.existingVolume.name | default "openeo-workspace" }}
             - name: OPENEO_WORKSPACE_SECURITY_GROUP
