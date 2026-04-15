@@ -119,9 +119,13 @@ spec:
             - name: OIDC_URL
               value: "{{ .Values.global.env.oidcUrl }}"
             - name: OIDC_ORGANISATION
-              value: "{{ .Values.global.env.odicOrganisation }}"
+              value: "{{ .Values.global.env.oidcOrganisation }}"
             - name: OIDC_POLICIES
               value: "{{ .Values.global.env.oidcPolicies }}"
+            - name: OIDC_PROVIDER_TITLE
+              value: "{{ .Values.global.env.oidcProviderTitle }}"
+            - name: OIDC_CLIENT_ID
+              value: "{{ .Values.global.env.oidcClientId }}"
             - name: STAC_API_URL
               value: "{{ .Values.global.env.stacCatalogueUrl }}"
             - name: ARGO_WORKFLOWS_SERVER
@@ -187,9 +191,13 @@ spec:
             - name: OIDC_URL
               value: "{{ .Values.global.env.oidcUrl }}"
             - name: OIDC_ORGANISATION
-              value: "{{ .Values.global.env.odicOrganisation }}"
+              value: "{{ .Values.global.env.oidcOrganisation }}"
             - name: OIDC_POLICIES
               value: "{{ .Values.global.env.oidcPolicies }}"
+            - name: OIDC_PROVIDER_TITLE
+              value: "{{ .Values.global.env.oidcProviderTitle }}"
+            - name: OIDC_CLIENT_ID
+              value: "{{ .Values.global.env.oidcClientId }}"
             - name: STAC_API_URL
               value: "{{ .Values.global.env.stacCatalogueUrl }}"
             - name: DASK_GATEWAY_SERVER

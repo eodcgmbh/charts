@@ -34,8 +34,10 @@ microk8s helm upgrade --install openeo -n test -f values.yaml .
 | global.env.apiTitle           | Title of the API                                      |   "OpenEO ArgoWorkflows"    |
 | global.env.apiDescription     | Description of the API                                |   "A K8S deployment of the openeo api for argoworkflows."    |
 | global.env.oidcUrl            | URL for OpenID Connect authentication                 |   "https://aai.egi.eu/auth/realms/egi"    |
-| global.env.odicOrganisation   | Organisation for OpenID Connect authentication        |  "egi"   |
+| global.env.oidcOrganisation   | Organisation for OpenID Connect authentication        |  "egi"   |
 | global.env.oidcPolicies       | Policies for OpenID Connect authorization             |    ""  |
+| global.env.oidcProviderTitle  | Display title of the OIDC provider                    |  "EGI Check-in"  |
+| global.env.oidcClientId       | Client ID registered with the OIDC provider           |  "openeo-platform-default-client"  |
 | global.env.stacCatalogueUrl   | URL for STAC catalogue                                |   "https://stac.eodc.eu/api/v1"    |
 | global.env.workspaceRoot      | Root directory for user workspaces                    |   "/user_workspaces/jobs"    |
 | global.env.workspaceMount      | The mount path for the volume where the user workspaces are stored  |   "/user_workspaces"    |
