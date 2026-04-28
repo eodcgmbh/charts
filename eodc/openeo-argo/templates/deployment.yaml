@@ -126,6 +126,10 @@ spec:
               value: "{{ .Values.global.env.oidcProviderTitle }}"
             - name: OIDC_CLIENT_ID
               value: "{{ .Values.global.env.oidcClientId }}"
+            {{- if .Values.global.env.oidcRolesClaim }}
+            - name: OIDC_ROLES_CLAIM
+              value: {{ .Values.global.env.oidcRolesClaim | quote }}
+            {{- end }}
             - name: STAC_API_URL
               value: "{{ .Values.global.env.stacCatalogueUrl }}"
             - name: ARGO_WORKFLOWS_SERVER
@@ -198,6 +202,10 @@ spec:
               value: "{{ .Values.global.env.oidcProviderTitle }}"
             - name: OIDC_CLIENT_ID
               value: "{{ .Values.global.env.oidcClientId }}"
+            {{- if .Values.global.env.oidcRolesClaim }}
+            - name: OIDC_ROLES_CLAIM
+              value: {{ .Values.global.env.oidcRolesClaim | quote }}
+            {{- end }}
             - name: STAC_API_URL
               value: "{{ .Values.global.env.stacCatalogueUrl }}"
             - name: DASK_GATEWAY_SERVER
@@ -210,6 +218,14 @@ spec:
               value: "{{ .Values.global.env.daskWorkerLimit }}"
             - name: DASK_CLUSTER_IDLE_TIMEOUT
               value: "{{ .Values.global.env.daskClusterTimeout }}"
+            {{- if .Values.global.env.daskProfiles }}
+            - name: DASK_PROFILES
+              value: {{ .Values.global.env.daskProfiles | quote }}
+            {{- end }}
+            {{- if .Values.global.env.daskRoleProfileMapping }}
+            - name: DASK_ROLE_PROFILE_MAPPING
+              value: {{ .Values.global.env.daskRoleProfileMapping | quote }}
+            {{- end }}
             - name: ARGO_WORKFLOWS_SERVER
               value: {{ if .Values.argoworkflows.enabled }}"http://openeo-argo-workflows-server.{{ .Release.Namespace }}.svc.cluster.local:2746"{{ else }}"{{ .Values.argoworkflows.server }}"{{ end }}
             - name: ARGO_WORKFLOWS_NAMESPACE
