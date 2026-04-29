@@ -24,6 +24,7 @@ global:
     daskClusterTimeout: "3600"
     daskProfiles: ""
     daskRoleProfileMapping: ""
+    logLevel: "INFO"
 
 replicaCount: 1
 
