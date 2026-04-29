@@ -162,6 +162,8 @@ spec:
                   key: postgres-password
             - name: LOG_LEVEL
               value: "{{ .Values.global.env.logLevel }}"
+            - name: UVICORN_LOG_LEVEL
+              value: "{{ .Values.global.env.logLevel | lower }}"
           volumeMounts:
             - name: workspace-mount
               mountPath: "{{ .Values.global.env.workspaceMount }}"
