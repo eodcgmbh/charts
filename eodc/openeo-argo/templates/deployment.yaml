@@ -160,6 +160,8 @@ spec:
                 secretKeyRef:
                   name: "openeo-postgresql"
                   key: postgres-password
+            - name: LOG_LEVEL
+              value: "{{ .Values.global.env.logLevel }}"
           volumeMounts:
             - name: workspace-mount
               mountPath: "{{ .Values.global.env.workspaceMount }}"
@@ -254,6 +256,8 @@ spec:
                 secretKeyRef:
                   name: "openeo-postgresql"
                   key: postgres-password
+            - name: LOG_LEVEL
+              value: "{{ .Values.global.env.logLevel }}"
           ports:
             - name: http
               containerPort: {{ .Values.service.port }}
