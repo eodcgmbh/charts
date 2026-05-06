@@ -17,7 +17,7 @@ global:
     stacCatalogueUrl: "https://stac.eodc.eu/api/v1"
     workspaceRoot: "/user_workspace/jobs"
     workspaceMount: &workspaceMount "/user_workspace"
-    executorImage: "ghcr.io/eodcgmbh/openeo-argoworkflows:executor-2026.5.1"
+    executorImage: "ghcr.io/eodcgmbh/openeo-argoworkflows:executor-2026.5.2"
     daskWorkerCores: "4"
     daskWorkerMemory: "8"
     daskWorkerLimit: "6"
