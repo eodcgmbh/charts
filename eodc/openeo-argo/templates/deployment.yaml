@@ -212,6 +212,18 @@ spec:
             {{- end }}
             - name: STAC_API_URL
               value: "{{ .Values.global.env.stacCatalogueUrl }}"
+            {{- if .Values.global.env.stacApiSecret.name }}
+            - name: STAC_API_USERNAME
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.global.env.stacApiSecret.name | quote }}
+                  key: {{ .Values.global.env.stacApiSecret.usernameKey | quote }}
+            - name: STAC_API_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.global.env.stacApiSecret.name | quote }}
+                  key: {{ .Values.global.env.stacApiSecret.passwordKey | quote }}
+            {{- end }}
             - name: DASK_GATEWAY_SERVER
               value: "http://traefik-openeo-dask-gateway.{{ .Release.Namespace }}.svc.cluster.local:80"
             - name: DASK_WORKER_CORES
