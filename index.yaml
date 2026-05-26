@@ -1546,4 +1546,15 @@ entries:
     urls:
     - wg-nginx-2025.10.1-rc1.tgz
     version: 2025.10.1-rc1
-generated: "2026-05-13T12:00:35.457764663Z"
+  zarr-browser:
+  - apiVersion: v2
+    appVersion: 2026.5.1
+    created: "2026-05-26T13:29:08.835102766Z"
+    description: A Helm chart for the Zarr Browser app
+    digest: 25cea241a447600c8f21af3b2fe611f0f302ab03f13d77cd7a80c839be496dfa
+    name: zarr-browser
+    type: application
+    urls:
+    - zarr-browser-2026.5.1.tgz
+    version: 2026.5.1
+generated: "2026-05-26T13:29:08.835373128Z"
