@@ -1,0 +1,50 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "zarr-browser.fullname" . }}
+  labels:
+    app: {{ include "zarr-browser.name" . }}
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: {{ include "zarr-browser.name" . }}
+  template:
+    metadata:
+      labels:
+        app: {{ include "zarr-browser.name" . }}
+    spec:
+      containers:
+        - name: zarr-browser
+          image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          ports:
+            - name: http
+              containerPort: {{ .Values.service.port }}
+              protocol: TCP
+          # env:
+          #   - name: DB_HOST
+          #     valueFrom:
+          #       secretKeyRef:
+          #         name: zarr-browser-db-secret
+          #         key: DB_HOST
+          #   - name: DB_USER
+          #     valueFrom:
+          #       secretKeyRef:
+          #         name: coverage-map-db-secret
+          #         key: DB_USER
+          #   - name: DB_PASSWORD
+          #     valueFrom:
+          #       secretKeyRef:
+          #         name: coverage-map-db-secret
+          #         key: DB_PASSWORD
+          #   - name: DB_IP
+          #     valueFrom:
+          #       secretKeyRef:
+          #         name: coverage-map-db-secret
+          #         key: DB_IP
+          #   - name: DB_PORT
+          #     valueFrom:
+          #       secretKeyRef:
+          #         name: coverage-map-db-secret
+          #         key: DB_PORT
