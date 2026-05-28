@@ -1,6 +1,6 @@
 dependencies:
 - name: wg-k8s
   repository: https://serrichard.github.io/wg-k8s
-  version: 2025.10.1-rc11
-digest: sha256:7ff2d67afafc9cf477080050a944607f1369cc6ee4b1622cde4663ee38b22191
-generated: "2025-10-31T12:27:58.854550786+01:00"
+  version: 2025.10.1-rc12
+digest: sha256:6ff3ffa72e8fa1f141a17a7b14de9e01d53534bbb1b1118b863cd176a695b913
+generated: "2026-05-28T15:01:00.71304973+02:00"
