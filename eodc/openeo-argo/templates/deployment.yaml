@@ -224,6 +224,40 @@ spec:
                   name: {{ .Values.global.env.stacApiSecret.name | quote }}
                   key: {{ .Values.global.env.stacApiSecret.passwordKey | quote }}
             {{- end }}
+            - name: AWS_DEFAULT_REGION
+              value: "{{ .Values.global.env.awsDefaultRegion }}"
+            - name: AWS_ENDPOINT_URL
+              value: "{{ .Values.global.env.awsEndpointUrl }}"
+            - name: EODAG__DEDL__PRIORITY
+              value: "{{ .Values.global.env.eodagDedlPriority }}"
+            - name: ICECHUNK_S3_CONNECT_TIMEOUT_MS
+              value: "{{ .Values.global.env.icechunkS3ConnectTimeoutMs }}"
+            - name: ICECHUNK_S3_OPERATION_ATTEMPT_TIMEOUT_MS
+              value: "{{ .Values.global.env.icechunkS3OperationAttemptTimeoutMs }}"
+            - name: ICECHUNK_S3_OPERATION_TIMEOUT_MS
+              value: "{{ .Values.global.env.icechunkS3OperationTimeoutMs }}"
+            {{- if .Values.global.env.executorSecret.name }}
+            - name: AWS_ACCESS_KEY_ID
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.global.env.executorSecret.name | quote }}
+                  key: {{ .Values.global.env.executorSecret.awsAccessKeyIdKey | quote }}
+            - name: AWS_SECRET_ACCESS_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.global.env.executorSecret.name | quote }}
+                  key: {{ .Values.global.env.executorSecret.awsSecretAccessKeyKey | quote }}
+            - name: EODAG__DEDL__AUTH__CREDENTIALS__USERNAME
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.global.env.executorSecret.name | quote }}
+                  key: {{ .Values.global.env.executorSecret.eodagUsernameKey | quote }}
+            - name: EODAG__DEDL__AUTH__CREDENTIALS__PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.global.env.executorSecret.name | quote }}
+                  key: {{ .Values.global.env.executorSecret.eodagPasswordKey | quote }}
+            {{- end }}
             - name: DASK_GATEWAY_SERVER
               value: "http://traefik-openeo-dask-gateway.{{ .Release.Namespace }}.svc.cluster.local:80"
             - name: DASK_WORKER_CORES
