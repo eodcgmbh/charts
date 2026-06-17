@@ -46,6 +46,17 @@ microk8s helm upgrade --install openeo -n test -f values.yaml .
 | global.env.daskWorkerMemory      | RAM available to the dask worker (in Gbs)                              |   "8"    |
 | global.env.daskWorkerLimit      | Maximum number of workers available per job.                              |   "6"    |
 | global.env.daskClusterTimeout      | How long an idle cluster can be left unused.                              |   "3600"    |
+| global.env.awsDefaultRegion      | AWS region for the Icechunk store, forwarded to the executor.                              |   "us-east-1"    |
+| global.env.awsEndpointUrl      | AWS S3 endpoint URL for the Icechunk store, forwarded to the executor.                              |   ""    |
+| global.env.eodagDedlPriority      | EODAG DEDL provider priority, forwarded to the executor.                              |   "10"    |
+| global.env.icechunkS3ConnectTimeoutMs      | Icechunk S3 connect timeout (ms), forwarded to the executor.                              |   "15000"    |
+| global.env.icechunkS3OperationAttemptTimeoutMs      | Icechunk S3 per-attempt operation timeout (ms), forwarded to the executor.                              |   "30000"    |
+| global.env.icechunkS3OperationTimeoutMs      | Icechunk S3 overall operation timeout (ms), forwarded to the executor.                              |   "120000"    |
+| global.env.executorSecret.name      | Name of an existing secret holding the sensitive executor credentials (AWS keys, EODAG login). Empty disables it; the chart references but does not create this secret.                              |   ""    |
+| global.env.executorSecret.awsAccessKeyIdKey      | Key in `executorSecret` holding `AWS_ACCESS_KEY_ID`.                              |   "aws-access-key-id"    |
+| global.env.executorSecret.awsSecretAccessKeyKey      | Key in `executorSecret` holding `AWS_SECRET_ACCESS_KEY`.                              |   "aws-secret-access-key"    |
+| global.env.executorSecret.eodagUsernameKey      | Key in `executorSecret` holding the EODAG DEDL username.                              |   "eodag-username"    |
+| global.env.executorSecret.eodagPasswordKey      | Key in `executorSecret` holding the EODAG DEDL password.                              |   "eodag-password"    |
 | image.repository      | Image for the OpenEO Api                                |   "ghcr.io/eodcgmbh/openeo-argoworkflows"    |
 | image.tag      | Tag for the OpenEO Api                              | "api-2026.3.11"  |
 | persistence.existingVolume      | existingVolume is a map used to define configurable values in the deployment. If not set, a pvc will be created by the chart.  | "" |

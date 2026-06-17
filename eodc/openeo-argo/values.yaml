@@ -29,6 +29,24 @@ global:
       name: ""
       usernameKey: "username"
       passwordKey: "secret"
+    # AWS / Icechunk store access, forwarded to the executor.
+    awsDefaultRegion: "us-east-1"
+    awsEndpointUrl: ""
+    # EODAG access via DESP, forwarded to the executor.
+    eodagDedlPriority: "10"
+    # Icechunk S3 timeout settings (in milliseconds), forwarded to the executor.
+    icechunkS3ConnectTimeoutMs: "15000"
+    icechunkS3OperationAttemptTimeoutMs: "30000"
+    icechunkS3OperationTimeoutMs: "120000"
+    # Existing secret holding the sensitive executor credentials (AWS keys and
+    # EODAG login). Leave name empty to disable; the chart references this
+    # secret, it does not create it.
+    executorSecret:
+      name: ""
+      awsAccessKeyIdKey: "aws-access-key-id"
+      awsSecretAccessKeyKey: "aws-secret-access-key"
+      eodagUsernameKey: "eodag-username"
+      eodagPasswordKey: "eodag-password"
 
 replicaCount: 1
 
