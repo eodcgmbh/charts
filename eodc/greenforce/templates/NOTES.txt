@@ -1,0 +1,27 @@
+GreenFORCE has been deployed as release "{{ .Release.Name }}".
+
+1. Wait for the pod to become ready:
+   kubectl -n {{ .Release.Namespace }} rollout status deploy/{{ include "greenforce.fullname" . }}
+
+2. Reach the Streamlit UI:
+{{- if .Values.ingress.enabled }}
+   http{{ if .Values.ingress.tls }}s{{ end }}://{{ .Values.ingress.host }}{{ .Values.ingress.path }}
+{{- else if eq .Values.service.type "LoadBalancer" }}
+   Get the external IP:
+   kubectl -n {{ .Release.Namespace }} get svc {{ include "greenforce.fullname" . }}
+{{- else }}
+   kubectl -n {{ .Release.Namespace }} port-forward svc/{{ include "greenforce.fullname" . }} 8501:{{ .Values.service.streamlitPort }}
+   Then open http://localhost:8501
+{{- end }}
+
+{{- if not (or .Values.secrets.create .Values.secrets.existingSecret) }}
+
+WARNING: No S3 credentials configured. Set secrets.s3AccessKey / secrets.s3SecretKey
+or point secrets.existingSecret at a Secret with the S3_* keys, or the data sync
+will fail.
+{{- end }}
+
+NOTE: Tile-server ports {{ .Values.tileserver.portBase }}-{{ add (int .Values.tileserver.portBase) (int .Values.tileserver.portRange) | sub 1 }}
+are published on the Service. They must be reachable by the browser; an Ingress
+only routes the UI port. For external tile access use a LoadBalancer/NodePort
+Service.

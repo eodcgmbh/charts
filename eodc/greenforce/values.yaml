@@ -1,0 +1,100 @@
+# Default values for the GreenFORCE chart.
+
+# -- Number of replicas. Keep at 1: the app keeps Streamlit session state in
+# memory, syncs rasters to a ReadWriteOnce volume, and runs an in-process pool
+# of tile servers — none of which are safe to run multi-replica.
+replicaCount: 1
+
+image:
+  # Self-hosted image, published by .github/workflows/docker-publish.yml.
+  # Override if you mirror it to another registry you control.
+  repository: ghcr.io/eodcgmbh/greenforce
+  tag: ""              # defaults to .Chart.AppVersion when empty
+  pullPolicy: IfNotPresent
+
+# Pull secrets for a private self-hosted registry. Create with:
+#   kubectl create secret docker-registry regcred --docker-server=... \
+#     --docker-username=... --docker-password=...
+imagePullSecrets: []
+# - name: regcred
+
+nameOverride: ""
+fullnameOverride: ""
+
+# Tile-server port pool used by localtileserver. The app picks a port in
+# [base, base+range) per raster (see greenforce/data_loaders.py). These values
+# are passed to the container and drive how many ports the Service exposes.
+tileserver:
+  portBase: 8010
+  portRange: 50
+
+service:
+  # ClusterIP, NodePort, or LoadBalancer. The tile-server ports must be
+  # reachable by the browser, so they are published on the Service too.
+  type: ClusterIP
+  streamlitPort: 8501
+  annotations: {}
+
+ingress:
+  # Routes the Streamlit UI (port 8501) only. The tile-server port range is
+  # not path-routable via a standard Ingress; for external tile access use a
+  # LoadBalancer/NodePort Service instead.
+  enabled: false
+  className: ""
+  annotations: {}
+  host: greenforce.example.com
+  path: /
+  pathType: Prefix
+  tls: []
+  # - secretName: greenforce-tls
+  #   hosts:
+  #     - greenforce.example.com
+
+# Persistent storage for S3-synced rasters mounted at /app/data/rasters.
+persistence:
+  enabled: true
+  existingClaim: ""
+  storageClass: ""
+  accessMode: ReadWriteOnce
+  size: 20Gi
+
+# S3 credentials. The app reads these from env vars when secrets.json is
+# absent (greenforce/s3_sync.py). Provide them here to have the chart create a
+# Secret, or set existingSecret to reuse one you manage out-of-band.
+secrets:
+  create: true
+  existingSecret: ""
+  # Keys expected when existingSecret is set:
+  #   S3_ACCESS_KEY, S3_SECRET_KEY, S3_ENDPOINT_URL, S3_REGION
+  s3AccessKey: ""
+  s3SecretKey: ""
+  s3EndpointUrl: "https://objects.eodc.eu"
+  s3Region: "us-east-1"
+
+# Extra plain environment variables (non-secret).
+env: {}
+# LOG_LEVEL: INFO
+
+resources:
+  requests:
+    cpu: 500m
+    memory: 1Gi
+  limits:
+    memory: 4Gi
+
+# The container's HEALTHCHECK uses Streamlit's readiness endpoint.
+probes:
+  enabled: true
+  path: /_stcore/health
+  initialDelaySeconds: 20
+  periodSeconds: 30
+  timeoutSeconds: 5
+  failureThreshold: 3
+
+podAnnotations: {}
+podSecurityContext: {}
+securityContext: {}
+
+nodeSelector: {}
+tolerations: []
+affinity: {}

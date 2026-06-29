@@ -1,0 +1,20 @@
+apiVersion: v2
+name: greenforce
+description: Helm chart for the GreenFORCE Streamlit demonstrator
+type: application
+
+# Chart version — bump on any change to the chart itself.
+version: 0.1.0
+
+# Tracks the application release. Override image.tag in values.yaml to pin
+# a specific build pushed to your self-hosted registry.
+appVersion: "latest"
+
+keywords:
+  - greenforce
+  - streamlit
+  - geospatial
+
+home: https://github.com/beetlefortechcompany/greenforce
+sources:
+  - https://github.com/beetlefortechcompany/greenforce
