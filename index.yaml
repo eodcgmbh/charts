@@ -366,6 +366,24 @@ entries:
     urls:
     - eodag-server-0.1.0.tgz
     version: 0.1.0
+  greenforce:
+  - apiVersion: v2
+    appVersion: latest
+    created: "2026-06-29T13:18:33.383608072Z"
+    description: Helm chart for the GreenFORCE Streamlit demonstrator
+    digest: 6be74d49eac1623fff438ae4c9aceb357d010ca6909cca372b60a19626f52715
+    home: https://github.com/beetlefortechcompany/greenforce
+    keywords:
+    - greenforce
+    - streamlit
+    - geospatial
+    name: greenforce
+    sources:
+    - https://github.com/beetlefortechcompany/greenforce
+    type: application
+    urls:
+    - greenforce-0.1.0.tgz
+    version: 0.1.0
   jupyter-enterprise-gateway:
   - apiVersion: v2
     appVersion: 3.2.3
@@ -1597,4 +1615,4 @@ entries:
     urls:
     - zarr-browser-2026.5.1.tgz
     version: 2026.5.1
-generated: "2026-06-17T12:49:48.020729Z"
+generated: "2026-06-29T13:18:33.383840576Z"
