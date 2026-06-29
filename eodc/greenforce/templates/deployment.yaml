@@ -1,0 +1,132 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "greenforce.fullname" . }}
+  labels:
+    {{- include "greenforce.labels" . | nindent 4 }}
+spec:
+  replicas: {{ .Values.replicaCount }}
+  # Recreate: the rasters PVC is ReadWriteOnce, so the old pod must release it
+  # before the new one starts.
+  strategy:
+    type: Recreate
+  selector:
+    matchLabels:
+      {{- include "greenforce.selectorLabels" . | nindent 6 }}
+  template:
+    metadata:
+      labels:
+        {{- include "greenforce.selectorLabels" . | nindent 8 }}
+      annotations:
+        {{- /* Roll the pod when S3 creds change. */}}
+        {{- if .Values.secrets.create }}
+        checksum/secret: {{ include (print $.Template.BasePath "/secret.yaml") . | sha256sum }}
+        {{- end }}
+        {{- with .Values.podAnnotations }}
+        {{- toYaml . | nindent 8 }}
+        {{- end }}
+    spec:
+      {{- with .Values.imagePullSecrets }}
+      imagePullSecrets:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.podSecurityContext }}
+      securityContext:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      containers:
+        - name: greenforce
+          image: "{{ .Values.image.repository }}:{{ .Values.image.tag | default .Chart.AppVersion }}"
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          {{- with .Values.securityContext }}
+          securityContext:
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
+          ports:
+            - name: http
+              containerPort: {{ .Values.service.streamlitPort }}
+              protocol: TCP
+            {{- $base := int .Values.tileserver.portBase }}
+            {{- range $i := until (int .Values.tileserver.portRange) }}
+            - name: tile-{{ $i }}
+              containerPort: {{ add $base $i }}
+              protocol: TCP
+            {{- end }}
+          env:
+            - name: STREAMLIT_SERVER_PORT
+              value: {{ .Values.service.streamlitPort | quote }}
+            - name: TILESERVER_PORT_BASE
+              value: {{ .Values.tileserver.portBase | quote }}
+            - name: TILESERVER_PORT_RANGE
+              value: {{ .Values.tileserver.portRange | quote }}
+            {{- if or .Values.secrets.create .Values.secrets.existingSecret }}
+            - name: S3_ACCESS_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: {{ include "greenforce.secretName" . }}
+                  key: S3_ACCESS_KEY
+            - name: S3_SECRET_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: {{ include "greenforce.secretName" . }}
+                  key: S3_SECRET_KEY
+            - name: S3_ENDPOINT_URL
+              valueFrom:
+                secretKeyRef:
+                  name: {{ include "greenforce.secretName" . }}
+                  key: S3_ENDPOINT_URL
+            - name: S3_REGION
+              valueFrom:
+                secretKeyRef:
+                  name: {{ include "greenforce.secretName" . }}
+                  key: S3_REGION
+            {{- end }}
+            {{- range $k, $v := .Values.env }}
+            - name: {{ $k }}
+              value: {{ $v | quote }}
+            {{- end }}
+          {{- if .Values.probes.enabled }}
+          readinessProbe:
+            httpGet:
+              path: {{ .Values.probes.path }}
+              port: http
+            initialDelaySeconds: {{ .Values.probes.initialDelaySeconds }}
+            periodSeconds: {{ .Values.probes.periodSeconds }}
+            timeoutSeconds: {{ .Values.probes.timeoutSeconds }}
+            failureThreshold: {{ .Values.probes.failureThreshold }}
+          livenessProbe:
+            httpGet:
+              path: {{ .Values.probes.path }}
+              port: http
+            initialDelaySeconds: {{ .Values.probes.initialDelaySeconds }}
+            periodSeconds: {{ .Values.probes.periodSeconds }}
+            timeoutSeconds: {{ .Values.probes.timeoutSeconds }}
+            failureThreshold: {{ .Values.probes.failureThreshold }}
+          {{- end }}
+          {{- with .Values.resources }}
+          resources:
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
+          volumeMounts:
+            - name: rasters
+              mountPath: /app/data/rasters
+      volumes:
+        - name: rasters
+          {{- if .Values.persistence.enabled }}
+          persistentVolumeClaim:
+            claimName: {{ include "greenforce.pvcName" . }}
+          {{- else }}
+          emptyDir: {}
+          {{- end }}
+      {{- with .Values.nodeSelector }}
+      nodeSelector:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.tolerations }}
+      tolerations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.affinity }}
+      affinity:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}

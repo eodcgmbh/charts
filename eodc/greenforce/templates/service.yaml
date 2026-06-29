@@ -1,0 +1,27 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ include "greenforce.fullname" . }}
+  labels:
+    {{- include "greenforce.labels" . | nindent 4 }}
+  {{- with .Values.service.annotations }}
+  annotations:
+    {{- toYaml . | nindent 4 }}
+  {{- end }}
+spec:
+  type: {{ .Values.service.type }}
+  selector:
+    {{- include "greenforce.selectorLabels" . | nindent 4 }}
+  ports:
+    - name: http
+      port: {{ .Values.service.streamlitPort }}
+      targetPort: http
+      protocol: TCP
+    {{- /* Publish the tile-server pool so the browser can reach tile URLs. */}}
+    {{- $base := int .Values.tileserver.portBase }}
+    {{- range $i := until (int .Values.tileserver.portRange) }}
+    - name: tile-{{ $i }}
+      port: {{ add $base $i }}
+      targetPort: tile-{{ $i }}
+      protocol: TCP
+    {{- end }}
