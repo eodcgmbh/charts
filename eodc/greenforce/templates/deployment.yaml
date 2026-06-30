@@ -22,6 +22,9 @@ spec:
         {{- if .Values.secrets.create }}
         checksum/secret: {{ include (print $.Template.BasePath "/secret.yaml") . | sha256sum }}
         {{- end }}
+        {{- if and .Values.config.enabled (not .Values.config.existingConfigMap) }}
+        checksum/config: {{ include (print $.Template.BasePath "/configmap.yaml") . | sha256sum }}
+        {{- end }}
         {{- with .Values.podAnnotations }}
         {{- toYaml . | nindent 8 }}
         {{- end }}
@@ -110,6 +113,12 @@ spec:
           volumeMounts:
             - name: rasters
               mountPath: /app/data/rasters
+            {{- if .Values.config.enabled }}
+            - name: config
+              mountPath: /app/config.json
+              subPath: config.json
+              readOnly: true
+            {{- end }}
       volumes:
         - name: rasters
           {{- if .Values.persistence.enabled }}
@@ -118,6 +127,11 @@ spec:
           {{- else }}
           emptyDir: {}
           {{- end }}
+        {{- if .Values.config.enabled }}
+        - name: config
+          configMap:
+            name: {{ include "greenforce.configMapName" . }}
+        {{- end }}
       {{- with .Values.nodeSelector }}
       nodeSelector:
         {{- toYaml . | nindent 8 }}
