@@ -369,6 +369,23 @@ entries:
   greenforce:
   - apiVersion: v2
     appVersion: latest
+    created: "2026-06-30T12:10:42.808062004Z"
+    description: Helm chart for the GreenFORCE Streamlit demonstrator
+    digest: 97d140a3c5e3a9cda040145bf7a39982be1796c6ca83d7f6d2cb1e5e724fc6d3
+    home: https://github.com/beetlefortechcompany/greenforce
+    keywords:
+    - greenforce
+    - streamlit
+    - geospatial
+    name: greenforce
+    sources:
+    - https://github.com/beetlefortechcompany/greenforce
+    type: application
+    urls:
+    - greenforce-0.2.0.tgz
+    version: 0.2.0
+  - apiVersion: v2
+    appVersion: latest
     created: "2026-06-29T13:18:33.383608072Z"
     description: Helm chart for the GreenFORCE Streamlit demonstrator
     digest: 6be74d49eac1623fff438ae4c9aceb357d010ca6909cca372b60a19626f52715
@@ -1615,4 +1632,4 @@ entries:
     urls:
     - zarr-browser-2026.5.1.tgz
     version: 2026.5.1
-generated: "2026-06-29T13:18:33.383840576Z"
+generated: "2026-06-30T12:10:42.808244243Z"
