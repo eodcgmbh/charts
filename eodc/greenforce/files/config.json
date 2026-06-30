@@ -1,0 +1,241 @@
+{
+    "map": {
+        "default_center": [
+            47.6,
+            14.1
+        ],
+        "default_zoom": 7
+    },
+    "years": [
+        2020,
+        2021,
+        2022,
+        2023,
+        2024,
+        2025
+    ],
+    "layers": {
+        "vectors": {
+            "forest_disturbances": "data/vectors/ForestDisturbances_X13_Y03_{year}_DE.geojson",
+            "processing_sites": "data/vectors/verarbeitende_betriebe.gpkg"
+        },
+        "boundaries": {
+            "country": {
+                "path": "data/boundaries/boundaries.gpkg",
+                "layer": "country"
+            },
+            "states": {
+                "path": "data/boundaries/boundaries.gpkg",
+                "layer": "states"
+            },
+            "districts": {
+                "path": "data/boundaries/boundaries.gpkg",
+                "layer": "districts"
+            }
+        },
+        "rasters": {
+            "sentinel2_by_year": {
+                "2020": "data/rasters/sentinel2/L4B_20200907_kf_X13_Y03_COG.tif",
+                "2021": "data/rasters/sentinel2/L4B_20210908_kf_X13_Y03_COG.tif",
+                "2022": "data/rasters/sentinel2/L4B_20220908_kf_X13_Y03_COG.tif",
+                "2023": "data/rasters/sentinel2/L4B_20230908_kf_X13_Y03_COG.tif",
+                "2024": "data/rasters/sentinel2/L4B_20240907_kf_X13_Y03_COG.tif",
+                "2025": "data/rasters/sentinel2/L4B_20250908_kf_X13_Y03_COG.tif"
+            },
+            "biomass": "data/rasters/ALS_VOL_HA_X13_Y03_COG.tif",
+            "tree_tops": "data/rasters/TreeTops_X13_Y03_COG.tif",
+            "tree_type": "data/rasters/TreeType_LhNh_X13_Y03_COG.tif",
+            "erntefaehigkeit": "data/rasters/Erntefaehigkeit_X13_Y03_COG.tif",
+            "zuwachs": "data/rasters/Zuwachs_X13_Y03_COG.tif",
+            "restholz_ernte": "data/rasters/Restholz_Ernte_X13_Y03_COG.tif",
+            "restholz_verarbeitung": "data/rasters/Restholz_Verarbeitung_X13_Y03_COG.tif",
+            "schadholz": "",
+            "nachhaltig_nutzbarer_ertrag": "",
+            "restholzanteile": "",
+            "nachhaltig_nutzbare_biomasse": "",
+            "holzbiomasse_entnahme": "",
+            "holzbiomasse_schadereignisse": "",
+            "holzbiomasse_verarbeitungsreste": "",
+            "kohlenstoffbilanz": ""
+        },
+        "infrastructure": {
+            "biomass_plants": "data/biomasscompanies.csv",
+            "sawmills": "data/sawmills_with_coords.csv"
+        }
+    },
+    "boundary_overlays": {
+        "order": [
+            "country",
+            "states",
+            "districts"
+        ],
+        "default_visible": "states",
+        "name_prefix": "Verwaltungsebene: ",
+        "labels": {
+            "country": "Staatsgrenze",
+            "states": "Bundesl\u00e4ndergrenze",
+            "districts": "Bezirksgrenze"
+        },
+        "simplify_tolerance": {
+            "country": 0.002,
+            "states": 0.001,
+            "districts": 0.0006
+        }
+    },
+    "fields": {
+        "disturbance_type_field": "highest_disturbed_name_de",
+        "disturbance_type_aliases": [
+            "Stoerungstyp",
+            "TYPE",
+            "ART"
+        ],
+        "disturbance_classes_de": [
+            "Borkenk\u00e4fer",
+            "Kahlhieb",
+            "Waldbrand",
+            "Windwurf"
+        ],
+        "tree_count_aliases": [
+            "AnzahlBaeume",
+            "TREES"
+        ],
+        "species_aliases": [
+            "Baumart",
+            "SPECIES"
+        ],
+        "tree_type_map": {
+            "1": "Nadel",
+            "3": "Laub"
+        }
+    },
+    "styles": {
+        "biomass_breaks": [
+            50,
+            100,
+            150,
+            200,
+            250,
+            300,
+            350,
+            400,
+            450
+        ],
+        "biomass_labels": [
+            "0\u201350",
+            "50\u2013100",
+            "100\u2013150",
+            "150\u2013200",
+            "200\u2013250",
+            "250\u2013300",
+            "300\u2013350",
+            "350\u2013400",
+            "400\u2013450",
+            ">450"
+        ]
+    },
+    "units": {
+        "biomass": "vfm/ha",
+        "zuwachs": "vfm/ha/a",
+        "restholz_ernte": "vfm/ha",
+        "restholz_verarbeitung": "vfm/ha",
+        "schadholz": "vfm/ha/a"
+    },
+    "raster_units": {
+        "schadholz": "density_per_ha",
+        "zuwachs": "density_per_ha",
+        "biomass": "density_per_ha",
+        "holzbiomasse_entnahme": "absolute",
+        "kohlenstoffbilanz": "absolute"
+    },
+    "s3": {
+        "bucket_name": "greenforce",
+        "prefix": "Bioenergy_Demonstrator_Data",
+        "assets": [
+            {
+                "id": "biomass",
+                "s3_key": "Bioenergy_Demonstrator_Data/ForestBiomass/ALS_VOL_HA_X13_Y03_COG.tif",
+                "local_path": "data/rasters/ALS_VOL_HA_X13_Y03_COG.tif"
+            },
+            {
+                "id": "tree_tops",
+                "s3_key": "Bioenergy_Demonstrator_Data/TreeTops/TreeTops_X13_Y03_COG.tif",
+                "local_path": "data/rasters/TreeTops_X13_Y03_COG.tif"
+            },
+            {
+                "id": "tree_type",
+                "s3_key": "Bioenergy_Demonstrator_Data/TreeType/TreeType_LhNh_X13_Y03_COG.tif",
+                "local_path": "data/rasters/TreeType_LhNh_X13_Y03_COG.tif"
+            },
+            {
+                "id": "erntefaehigkeit",
+                "s3_key": "Bioenergy_Demonstrator_Data/ErntefaehigkeitDistanzForstweg/Distance_to_Road_X13_Y03_COG.tif",
+                "local_path": "data/rasters/Erntefaehigkeit_X13_Y03_COG.tif"
+            },
+            {
+                "id": "zuwachs",
+                "s3_key": "Bioenergy_Demonstrator_Data/ZuwachsMeasured/BON_Measured_combined_X13_Y03_COG.tif",
+                "local_path": "data/rasters/Zuwachs_X13_Y03_COG.tif"
+            },
+            {
+                "id": "restholz_ernte",
+                "s3_key": "Bioenergy_Demonstrator_Data/RestholzErnte/Restholz_Ernte_combined_X13_Y03_COG.tif",
+                "local_path": "data/rasters/Restholz_Ernte_X13_Y03_COG.tif"
+            },
+            {
+                "id": "restholz_verarbeitung",
+                "s3_key": "Bioenergy_Demonstrator_Data/RestholzVerarbeitung/Restholz_Verarbeitung_combined_X13_Y03_COG.tif",
+                "local_path": "data/rasters/Restholz_Verarbeitung_X13_Y03_COG.tif"
+            }
+        ],
+        "assets_by_year": {
+            "forest_disturbances": {
+                "2021": {
+                    "s3_key": "Bioenergy_Demonstrator_Data/ForestDisturbances/ForestDisturbances_2021_DE.geojson",
+                    "local_path": "data/vectors/ForestDisturbances_X13_Y03_2021_DE.geojson"
+                },
+                "2022": {
+                    "s3_key": "Bioenergy_Demonstrator_Data/ForestDisturbances/ForestDisturbances_2022_DE.geojson",
+                    "local_path": "data/vectors/ForestDisturbances_X13_Y03_2022_DE.geojson"
+                },
+                "2023": {
+                    "s3_key": "Bioenergy_Demonstrator_Data/ForestDisturbances/ForestDisturbances_2023_DE.geojson",
+                    "local_path": "data/vectors/ForestDisturbances_X13_Y03_2023_DE.geojson"
+                },
+                "2024": {
+                    "s3_key": "Bioenergy_Demonstrator_Data/ForestDisturbances/ForestDisturbances_2024_DE.geojson",
+                    "local_path": "data/vectors/ForestDisturbances_X13_Y03_2024_DE.geojson"
+                },
+                "2025": {
+                    "s3_key": "Bioenergy_Demonstrator_Data/ForestDisturbances/ForestDisturbances_2025_DE.geojson",
+                    "local_path": "data/vectors/ForestDisturbances_X13_Y03_2025_DE.geojson"
+                }
+            },
+            "sentinel2": {
+                "2020": {
+                    "s3_key": "Bioenergy_Demonstrator_Data/Sentinel2/L4B_20200907_kf_X13_Y03_COG.tif",
+                    "local_path": "data/rasters/sentinel2/L4B_20200907_kf_X13_Y03_COG.tif"
+                },
+                "2021": {
+                    "s3_key": "Bioenergy_Demonstrator_Data/Sentinel2/L4B_20210908_kf_X13_Y03_COG.tif",
+                    "local_path": "data/rasters/sentinel2/L4B_20210908_kf_X13_Y03_COG.tif"
+                },
+                "2022": {
+                    "s3_key": "Bioenergy_Demonstrator_Data/Sentinel2/L4B_20220908_kf_X13_Y03_COG.tif",
+                    "local_path": "data/rasters/sentinel2/L4B_20220908_kf_X13_Y03_COG.tif"
+                },
+                "2023": {
+                    "s3_key": "Bioenergy_Demonstrator_Data/Sentinel2/L4B_20230908_kf_X13_Y03_COG.tif",
+                    "local_path": "data/rasters/sentinel2/L4B_20230908_kf_X13_Y03_COG.tif"
+                },
+                "2024": {
+                    "s3_key": "Bioenergy_Demonstrator_Data/Sentinel2/L4B_20240907_kf_X13_Y03_COG.tif",
+                    "local_path": "data/rasters/sentinel2/L4B_20240907_kf_X13_Y03_COG.tif"
+                },
+                "2025": {
+                    "s3_key": "Bioenergy_Demonstrator_Data/Sentinel2/L4B_20250908_kf_X13_Y03_COG.tif",
+                    "local_path": "data/rasters/sentinel2/L4B_20250908_kf_X13_Y03_COG.tif"
+                }
+            }
+        }
+    }
+}

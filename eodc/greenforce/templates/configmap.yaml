@@ -1,0 +1,11 @@
+{{- if and .Values.config.enabled (not .Values.config.existingConfigMap) }}
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ include "greenforce.configMapName" . }}
+  labels:
+    {{- include "greenforce.labels" . | nindent 4 }}
+data:
+  config.json: |
+{{ .Values.config.content | default (.Files.Get "files/config.json") | indent 4 }}
+{{- end }}

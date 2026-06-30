@@ -82,6 +82,29 @@ ingress:
 helm upgrade --install greenforce ./helm/greenforce -n greenforce -f my-values.yaml
 ```
 
+## Application config (config.json)
+
+The app's `config.json` (data paths, map defaults, styling) is mounted from a
+ConfigMap at `/app/config.json` rather than baked into the image, so you can
+change it without rebuilding. The app deep-merges it over a baked-in baseline.
+
+- By default the chart renders a ConfigMap from its bundled `files/config.json`.
+- Override the whole document inline via `config.content` (a JSON string).
+- Or manage it yourself and point `config.existingConfigMap` at a ConfigMap that
+  has a `config.json` key — the chart then renders no ConfigMap of its own.
+
+The pod carries a `checksum/config` annotation, so a change to the chart-rendered
+ConfigMap rolls the pod automatically. Changes to an `existingConfigMap` you
+manage do not trigger a roll — restart the deployment yourself.
+
+Example overriding a single subtree by supplying a full document:
+
+```yaml
+config:
+  content: |
+    { "s3": { "bucket_name": "greenforce", ... } }
+```
+
 ## Notes & limitations
 
 - **Single replica.** The app holds Streamlit session state in memory, syncs

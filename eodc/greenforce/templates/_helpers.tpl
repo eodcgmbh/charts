@@ -44,6 +44,15 @@ app.kubernetes.io/instance: {{ .Release.Name }}
 {{- end }}
 {{- end }}
 
+{{/* Name of the ConfigMap holding config.json. */}}
+{{- define "greenforce.configMapName" -}}
+{{- if .Values.config.existingConfigMap }}
+{{- .Values.config.existingConfigMap }}
+{{- else }}
+{{- printf "%s-config" (include "greenforce.fullname" .) }}
+{{- end }}
+{{- end }}
+
 {{/* Name of the PVC. */}}
 {{- define "greenforce.pvcName" -}}
 {{- if .Values.persistence.existingClaim }}

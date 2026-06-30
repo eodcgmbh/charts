@@ -71,6 +71,18 @@ secrets:
   s3EndpointUrl: "https://objects.eodc.eu"
   s3Region: "us-east-1"
 
+# Application config.json, mounted at /app/config.json. The app deep-merges it
+# over its baked-in baseline, so this is the place to override data paths, map
+# defaults, styling, etc. without rebuilding the image.
+config:
+  enabled: true
+  # Reuse a ConfigMap you manage yourself (must contain a config.json key).
+  # When set, the chart does not render its own ConfigMap.
+  existingConfigMap: ""
+  # Inline override of the whole config.json document (string). When empty, the
+  # chart's bundled files/config.json is used.
+  content: ""
+
 # Extra plain environment variables (non-secret).
 env: {}
 # LOG_LEVEL: INFO
