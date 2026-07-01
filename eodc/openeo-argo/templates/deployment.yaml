@@ -111,6 +111,8 @@ spec:
               value: {{ .Values.persistence.existingVolume.fsGroup | default 1000 | quote }}
             - name: OPENEO_EXECUTOR_IMAGE
               value: "{{ .Values.global.env.executorImage }}"
+            - name: OPENEO_EXECUTOR_IMAGE_PULL_POLICY
+              value: "{{ .Values.global.env.executorImagePullPolicy }}"
             - name: OPENEO_SIGN_KEY
               valueFrom:
                 secretKeyRef:
@@ -188,6 +190,8 @@ spec:
               value: "{{ .Values.global.env.apiDescription }}"
             - name: OPENEO_EXECUTOR_IMAGE
               value: "{{ .Values.global.env.executorImage }}"
+            - name: OPENEO_EXECUTOR_IMAGE_PULL_POLICY
+              value: "{{ .Values.global.env.executorImagePullPolicy }}"
             - name: OPENEO_WORKSPACE_ROOT
               value: "{{ .Values.global.env.workspaceRoot }}"
             - name: OPENEO_WORKSPACE_MOUNT
