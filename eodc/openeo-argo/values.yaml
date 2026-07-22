@@ -48,6 +48,7 @@ global:
       awsSecretAccessKeyKey: "aws-secret-access-key"
       eodagUsernameKey: "eodag-username"
       eodagPasswordKey: "eodag-password"
+    argoArtifactLogsPrefix: ""
 
 replicaCount: 1
 

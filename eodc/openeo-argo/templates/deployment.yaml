@@ -145,10 +145,30 @@ spec:
                   key: token
             - name: ARGO_WORKFLOWS_LIMIT
               value: "10"
+            {{- if .Values.global.env.argoArtifactLogsPrefix }}
+            - name: ARGO_ARTIFACT_LOGS_PREFIX
+              value: "{{ .Values.global.env.argoArtifactLogsPrefix }}"
+            - name: AWS_DEFAULT_REGION
+              value: "{{ .Values.global.env.awsDefaultRegion }}"
+            - name: AWS_ENDPOINT_URL
+              value: "{{ .Values.global.env.awsEndpointUrl }}"
+            {{- if .Values.global.env.executorSecret.name }}
+            - name: AWS_ACCESS_KEY_ID
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.global.env.executorSecret.name | quote }}
+                  key: {{ .Values.global.env.executorSecret.awsAccessKeyIdKey | quote }}
+            - name: AWS_SECRET_ACCESS_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.global.env.executorSecret.name | quote }}
+                  key: {{ .Values.global.env.executorSecret.awsSecretAccessKeyKey | quote }}
+            {{- end }}
+            {{- end }}
             - name: REDIS_HOST
               value: "openeo-redis-master.{{ .Release.Namespace }}.svc.cluster.local"
             - name: REDIS_PORT
-              value: "6379" 
+              value: "6379"
             - name: POSTGRESQL_HOST
               value: "openeo-postgresql-hl.{{ .Release.Namespace }}.svc.{{ .Values.postgresql.clusterDomain }}"
             - name: POSTGRESQL_PORT
