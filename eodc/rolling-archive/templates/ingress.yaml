@@ -1,0 +1,52 @@
+{{- if .Values.eventSource.ingress.enabled }}
+{{- $ba := .Values.eventSource.ingress.basicAuth }}
+{{- if and $ba.enabled (not $ba.existingSecret) }}
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: {{ include "rolling-archive.fullname" . }}-basic-auth
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "rolling-archive.labels" . | nindent 4 }}
+type: Opaque
+data:
+  auth: {{ htpasswd $ba.username $ba.password | b64enc }}
+{{- end }}
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: {{ include "rolling-archive.fullname" . }}
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "rolling-archive.labels" . | nindent 4 }}
+  annotations:
+    {{- if $ba.enabled }}
+    nginx.ingress.kubernetes.io/auth-type: basic
+    nginx.ingress.kubernetes.io/auth-secret: {{ $ba.existingSecret | default (printf "%s-basic-auth" (include "rolling-archive.fullname" .)) }}
+    nginx.ingress.kubernetes.io/auth-realm: "CDSE push notifications"
+    {{- end }}
+    {{- with .Values.eventSource.ingress.annotations }}
+    {{- toYaml . | nindent 4 }}
+    {{- end }}
+spec:
+  {{- with .Values.eventSource.ingress.className }}
+  ingressClassName: {{ . }}
+  {{- end }}
+  {{- with .Values.eventSource.ingress.tls }}
+  tls:
+    {{- toYaml . | nindent 4 }}
+  {{- end }}
+  rules:
+    - host: {{ .Values.eventSource.ingress.host | quote }}
+      http:
+        paths:
+          - path: /cdse
+            pathType: Prefix
+            backend:
+              service:
+                name: {{ include "rolling-archive.fullname" . }}-eventsource-svc
+                port:
+                  number: {{ .Values.eventSource.port }}
+{{- end }}

@@ -1,0 +1,26 @@
+Rolling Archive ({{ .Chart.Name }} {{ .Chart.AppVersion }}) has been deployed.
+
+This chart assumes a Kafka cluster (Strimzi) and the Argo Events controller already
+exist in this cluster -- it only creates the application-level resources on top:
+KafkaTopics on the existing cluster ({{ .Values.kafka.clusterName }}), and this
+pipeline's own EventBus/EventSource/Sensor/worker/enricher Deployments.
+
+Worker Deployments (one per CDSE account, per tier):
+  priority ({{ .Values.worker.priority.topic }}):
+{{- range .Values.worker.priority.accounts }}
+    - {{ include "rolling-archive.workerDeploymentName" (dict "context" $ "tier" "priority" "account" .) }}
+{{- end }}
+  other ({{ .Values.worker.other.topic }}):
+{{- range .Values.worker.other.accounts }}
+    - {{ include "rolling-archive.workerDeploymentName" (dict "context" $ "tier" "other" "account" .) }}
+{{- end }}
+
+{{- if not .Values.eventSource.ingress.enabled }}
+
+Ingress is disabled -- push-mode CDSE subscriptions won't be reachable. This is fine
+if rolling-archive-scope-manager's scope.yaml only uses subscription_type: pull.
+{{- end }}
+
+None of this chart's Secrets (S3, CDSE accounts) are created by the chart itself --
+populate {{ .Values.s3.existingSecret }} and each worker account's existingSecret via
+Vault (cluster/secrets/*.yaml) before this will actually run.

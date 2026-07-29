@@ -1,0 +1,33 @@
+apiVersion: argoproj.io/v1alpha1
+kind: EventSource
+metadata:
+  name: {{ include "rolling-archive.fullname" . }}
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "rolling-archive.labels" . | nindent 4 }}
+spec:
+  eventBusName: {{ include "rolling-archive.fullname" . }}
+  service:
+    ports:
+      - port: {{ .Values.eventSource.port }}
+        targetPort: {{ .Values.eventSource.port }}
+  webhook:
+    # Tier is decided by which path a CDSE subscription's NotificationEndpoint points
+    # at (see rolling-archive-scope-manager), not by message content -- the Sensor
+    # does a trivial 1:1 pass-through per path, no exprs/regex matching at all. This
+    # replaced an earlier design that classified by content downstream; that worked
+    # but silently drifted out of sync once already (missed a GRD product variant).
+    priority:
+      endpoint: /cdse/priority
+      method: POST
+      port: {{ .Values.eventSource.port | quote }}
+    other:
+      endpoint: /cdse/other
+      method: POST
+      port: {{ .Values.eventSource.port | quote }}
+      # TODO: CDSE's real push callback authenticates via HTTP Basic Auth (confirmed
+      # against CloudFerro's push_subscription_endpoint_example reference) -- Argo
+      # Events' webhook EventSource only supports a Bearer-token authSecret, not Basic
+      # Auth, so that's validated at the Ingress layer instead (see ingress.yaml).
+      # These endpoints accept any POST unauthenticated if ingress-level auth isn't
+      # enabled -- never exercised against a real CDSE push delivery yet.

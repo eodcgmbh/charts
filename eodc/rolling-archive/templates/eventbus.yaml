@@ -1,0 +1,10 @@
+apiVersion: argoproj.io/v1alpha1
+kind: EventBus
+metadata:
+  name: {{ include "rolling-archive.fullname" . }}
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "rolling-archive.labels" . | nindent 4 }}
+spec:
+  jetstream:
+    version: {{ .Values.eventBus.jetstreamVersion | quote }}

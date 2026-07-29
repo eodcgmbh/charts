@@ -1,0 +1,126 @@
+# Default values for the Rolling Archive chart.
+
+nameOverride: ""
+fullnameOverride: ""
+
+imagePullSecrets: []
+# - name: regcred
+
+image:
+  registry: registry.eodc.eu
+  worker:
+    repository: rolling-archive/rolling-archive-worker
+    tag: ""              # defaults to .Chart.AppVersion when empty
+  enricher:
+    repository: rolling-archive/rolling-archive-enricher
+    tag: ""
+  pullPolicy: IfNotPresent
+
+# -- This chart assumes a Kafka cluster (Strimzi) and the Argo Events controller
+# already exist in the target cluster -- provisioning those is out of this chart's
+# scope (ask the cluster-managing team). This chart only creates the application-level
+# resources on top: KafkaTopics on that existing cluster, and our own
+# EventBus/EventSource/Sensor.
+kafka:
+  # Name of the existing Strimzi Kafka cluster CR -- used to label our KafkaTopics
+  # (strimzi.io/cluster) so the operator picks them up.
+  clusterName: my-cluster
+  bootstrap: my-cluster-kafka-bootstrap.kafka.svc:9092
+  # Must match whatever Strimzi version the real cluster runs -- Strimzi has moved
+  # KafkaTopic through v1beta1 -> v1beta2 -> v1 over time, and only ONE is actually
+  # served by any given install (confirmed the hard way: v1beta2, assumed from an
+  # earlier Strimzi version, wasn't served at all by the local-testing cluster's
+  # current install -- only kafka.strimzi.io/v1 was). Check with
+  # `kubectl api-resources | grep -i kafkatopic` against the real target cluster
+  # before deploying, don't assume this default is right there.
+  topicApiVersion: kafka.strimzi.io/v1
+  # Only the topics this pipeline actually produces/consumes today. product.discovered
+  # and download.requests are reserved for the not-yet-built Airflow reconciliation
+  # piece -- see rolling-archive-scope-manager's README -- and deliberately not
+  # created here until that exists and needs them.
+  topics:
+    downloadHigh: download.high
+    downloadNormal: download.normal
+    productUploaded: product.uploaded
+    productAvailable: product.available
+    partitions: 3
+    replicationFactor: 3
+
+# -- S3/CEPH is the sole source of truth for idempotency (no metadata DB). One shared
+# bucket and one shared set of S3 credentials across every worker replica, regardless
+# of which CDSE account that replica uses for downloading -- S3 access and CDSE
+# account are independent concerns.
+s3:
+  host: https://objectstore.eodc.eu:2222
+  bucket: eodag
+  # Secret with keys S3_KEY/S3_SECRET. This chart never creates it -- populated via
+  # Vault (cluster/secrets/*.yaml), per EODC's deployment strategy.
+  existingSecret: rolling-archive-s3-credentials
+  providerId: cop_dataspace
+
+worker:
+  # Concurrent downloads per pod, and max Kafka records pulled per poll wave (10-20
+  # per the architecture doc).
+  concurrency: 15
+  resources: {}
+  # -- One Deployment per (tier, account) pair -- see rolling-archive-scope-manager's
+  # scope.yaml for the CDSE-subscription side of the same account pool. Each entry's
+  # existingSecret needs CDSE_USERNAME/CDSE_PASSWORD keys, via Vault, never created by
+  # this chart. There is deliberately no in-code account-pooling/scheduling logic (a
+  # decision already made for this project) -- account assignment is entirely at the
+  # Helm/deployment layer: one replica, one Deployment, one account, each.
+  priority:
+    topic: download.high
+    accounts:
+      - name: account1
+        existingSecret: cdse-account1-credentials
+  other:
+    topic: download.normal
+    accounts:
+      - name: account2
+        existingSecret: cdse-account2-credentials
+
+enricher:
+  replicas: 1
+  resources: {}
+  # Required, no default -- EODC's real STAC API host.
+  stacApiBaseUrl: ""
+  # Max Kafka records pulled per poll wave. No download/upload I/O here, so this can
+  # be generous compared to worker.concurrency.
+  pollBatchSize: 50
+
+eventBus:
+  jetstreamVersion: latest
+
+eventSource:
+  # Fixed container port the webhook server listens on -- change only if it collides
+  # with something else in the same namespace.
+  port: 12000
+  ingress:
+    # Push-mode CDSE subscriptions need a public HTTPS endpoint -- disabled by default
+    # since pull-mode (rolling-archive-scope-manager's subscription_type: pull) needs
+    # no ingress at all. Enable once the cluster team has ingress/DNS/TLS in place.
+    enabled: false
+    className: ""
+    annotations: {}
+    host: rolling-archive.example.eodc.eu
+    tls: []
+    # - secretName: rolling-archive-tls
+    #   hosts:
+    #     - rolling-archive.example.eodc.eu
+    basicAuth:
+      # CDSE's real push callback authenticates with plain HTTP Basic Auth, using the
+      # NotificationEpUsername/Password registered on the subscription (confirmed
+      # against CloudFerro's push_subscription_endpoint_example reference). Argo
+      # Events' own webhook EventSource only supports a Bearer-token authSecret, not
+      # Basic Auth, so this has to be validated at the Ingress layer instead --
+      # assumes an nginx-ingress controller (nginx.ingress.kubernetes.io/auth-*
+      # annotations); this repo has charts using both apisix and nginx elsewhere, so
+      # adjust if the real cluster's ingress controller differs. Never actually
+      # exercised against a real CDSE push delivery yet.
+      enabled: false
+      # If set, used as-is (must be an htpasswd-format Secret with an `auth` key) --
+      # otherwise one is generated from username/password below.
+      existingSecret: ""
+      username: ""
+      password: ""

@@ -1,0 +1,16 @@
+apiVersion: v2
+name: rolling-archive
+description: >-
+  Mirrors Copernicus Data Space Ecosystem (CDSE) Sentinel products into CEPH S3 with a
+  configurable, short retention window. CEPH S3 is the sole source of truth -- no
+  metadata database. Two-tier priority (Sentinel-1 GRD+AUX near-real-time, everything
+  else best-effort) routed via CDSE subscription/webhook endpoint, not message content.
+type: application
+version: 0.1.0
+appVersion: "0.1.0"
+home: https://git.eodc.eu/sreimond/rolling-archive-worker
+sources:
+  - https://git.eodc.eu/sreimond/cdse-client
+  - https://git.eodc.eu/sreimond/rolling-archive-worker
+  - https://git.eodc.eu/sreimond/rolling-archive-enricher
+  - https://git.eodc.eu/sreimond/rolling-archive-scope-manager

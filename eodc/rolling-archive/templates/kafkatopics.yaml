@@ -1,0 +1,14 @@
+{{- range list .Values.kafka.topics.downloadHigh .Values.kafka.topics.downloadNormal .Values.kafka.topics.productUploaded .Values.kafka.topics.productAvailable }}
+---
+apiVersion: {{ $.Values.kafka.topicApiVersion }}
+kind: KafkaTopic
+metadata:
+  name: {{ . }}
+  namespace: {{ $.Release.Namespace }}
+  labels:
+    strimzi.io/cluster: {{ $.Values.kafka.clusterName }}
+    {{- include "rolling-archive.labels" $ | nindent 4 }}
+spec:
+  partitions: {{ $.Values.kafka.topics.partitions }}
+  replicas: {{ $.Values.kafka.topics.replicationFactor }}
+{{- end }}
