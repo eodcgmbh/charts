@@ -67,6 +67,20 @@ spec:
                 secretKeyRef:
                   name: {{ $account.existingSecret }}
                   key: CDSE_PASSWORD
+            - name: MIRROR_ASSETS
+              value: {{ $.Values.worker.mirrorAssets | quote }}
+            {{- if $.Values.worker.mirrorAssets }}
+            - name: CDSE_S3_ACCESS_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: {{ $.Values.worker.cdseS3.existingSecret }}
+                  key: CDSE_S3_ACCESS_KEY
+            - name: CDSE_S3_SECRET_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: {{ $.Values.worker.cdseS3.existingSecret }}
+                  key: CDSE_S3_SECRET_KEY
+            {{- end }}
           {{- with $.Values.worker.resources }}
           resources:
             {{- toYaml . | nindent 12 }}
@@ -142,6 +156,20 @@ spec:
                 secretKeyRef:
                   name: {{ $account.existingSecret }}
                   key: CDSE_PASSWORD
+            - name: MIRROR_ASSETS
+              value: {{ $.Values.worker.mirrorAssets | quote }}
+            {{- if $.Values.worker.mirrorAssets }}
+            - name: CDSE_S3_ACCESS_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: {{ $.Values.worker.cdseS3.existingSecret }}
+                  key: CDSE_S3_ACCESS_KEY
+            - name: CDSE_S3_SECRET_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: {{ $.Values.worker.cdseS3.existingSecret }}
+                  key: CDSE_S3_SECRET_KEY
+            {{- end }}
           {{- with $.Values.worker.resources }}
           resources:
             {{- toYaml . | nindent 12 }}

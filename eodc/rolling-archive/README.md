@@ -49,6 +49,30 @@ own code).
 S3/CEPH credentials are shared across every worker replica regardless of tier/account
 (`s3.existingSecret`) -- CDSE account and S3 access are independent concerns.
 
+## Per-asset mirroring for HDA's fast-path cache (ACM26-257)
+
+`worker.mirrorAssets` (default `true`) mirrors every product's individual files from
+CDSE's own S3 (`eodata.dataspace.copernicus.eu` -- already unzipped there) into this
+bucket, nested under the same product prefix as the whole-ZIP object, so EODC's HDA
+service can serve individual assets (e.g. one Sentinel-2 band) straight from here
+instead of its slower Airflow-triggered on-demand extraction path. Covers every
+collection this pipeline archives, not just the ones HDA currently federates.
+
+Needs `worker.cdseS3.existingSecret` -- CDSE S3 access-key credentials (generated via
+CDSE's dashboard, no API for this), **not** the per-account OAuth secrets above.
+Currently a single credential shared across every worker replica regardless of tier/
+account -- whether that's actually sufficient CDSE-quota-wise (vs needing one per
+underlying account, like the OAuth accounts do) is **not yet confirmed**: consumer-tier
+CDSE accounts cap out at 12 TB/month transfer each, and it's unconfirmed whether S3
+access-key usage draws from the same per-account pool as OAuth/OData usage. Copernicus
+Service/Collaborative Network accounts have significantly higher allowances intended
+for exactly this kind of mirroring workload, but exact numbers aren't known yet --
+revisit this if real quota numbers surface reason to split into per-account
+credentials instead.
+
+Set `worker.mirrorAssets: false` to disable across every worker replica without
+needing `cdseS3.existingSecret` to exist at all.
+
 ## Ingress and CDSE's push auth
 
 Disabled by default (`eventSource.ingress.enabled: false`) -- pull-mode subscriptions
@@ -72,7 +96,9 @@ actually exercised against a real CDSE push delivery yet.
 ## Validated so far
 
 `helm lint` and `helm template` clean with both default values and a multi-account
-(2 priority + 3 other accounts) + ingress/basic-auth override. Every rendered resource
+(2 priority + 3 other accounts) + ingress/basic-auth override, and with
+`worker.mirrorAssets` both `true` (default) and `false` (confirms the CDSE-S3 env
+vars/secret reference disappear entirely when disabled). Every rendered resource
 passed a `kubectl apply --dry-run=server` against a real cluster with the actual
 Argo Events and Strimzi CRDs installed (caught one real bug this way: `KafkaTopic`'s
 `apiVersion` was written as the now-unserved `kafka.strimzi.io/v1beta2`, fixed to a

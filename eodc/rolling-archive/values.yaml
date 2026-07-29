@@ -63,6 +63,21 @@ worker:
   # per the architecture doc).
   concurrency: 15
   resources: {}
+  # -- Per-asset mirroring (ACM26-257): after archiving each product's whole ZIP,
+  # also mirror its individual files from CDSE's own S3 into our bucket, for HDA's
+  # fast-path cache -- covers every collection, on by default. Set false to disable
+  # across every worker replica without needing cdseS3.existingSecret to exist at
+  # all.
+  mirrorAssets: true
+  cdseS3:
+    # Secret with keys CDSE_S3_ACCESS_KEY/CDSE_S3_SECRET_KEY -- CDSE S3 access keys,
+    # generated via CDSE's dashboard (no API for this), NOT the per-account OAuth
+    # secrets below. Only required if mirrorAssets is true. Currently a single
+    # credential shared across every worker replica -- whether that's actually
+    # sufficient quota-wise (vs needing one per underlying CDSE account, like the
+    # OAuth accounts do) is NOT yet confirmed either way -- see
+    # rolling-archive-hda-integration memory notes before assuming this scales.
+    existingSecret: rolling-archive-cdse-s3-credentials
   # -- One Deployment per (tier, account) pair -- see rolling-archive-scope-manager's
   # scope.yaml for the CDSE-subscription side of the same account pool. Each entry's
   # existingSecret needs CDSE_USERNAME/CDSE_PASSWORD keys, via Vault, never created by
