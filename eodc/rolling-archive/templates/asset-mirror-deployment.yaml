@@ -1,0 +1,76 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "rolling-archive.fullname" . }}-asset-mirror
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "rolling-archive.labels" . | nindent 4 }}
+    app.kubernetes.io/component: asset-mirror
+spec:
+  replicas: {{ .Values.assetMirror.replicas }}
+  selector:
+    matchLabels:
+      {{- include "rolling-archive.selectorLabels" . | nindent 6 }}
+      app.kubernetes.io/component: asset-mirror
+  template:
+    metadata:
+      labels:
+        {{- include "rolling-archive.selectorLabels" . | nindent 8 }}
+        app.kubernetes.io/component: asset-mirror
+    spec:
+      {{- with .Values.imagePullSecrets }}
+      imagePullSecrets:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      containers:
+        - name: asset-mirror
+          # Same image as the download worker -- a different entrypoint
+          # (pyproject.toml's [project.scripts]), not a separate image.
+          image: "{{ .Values.image.registry }}/{{ .Values.image.worker.repository }}:{{ .Values.image.worker.tag | default .Chart.AppVersion }}"
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          command: ["rolling-archive-asset-mirror"]
+          env:
+            - name: KAFKA_BOOTSTRAP
+              value: {{ .Values.kafka.bootstrap | quote }}
+            - name: KAFKA_TOPIC
+              value: {{ .Values.kafka.topics.productUploaded | quote }}
+            - name: KAFKA_GROUP_ID
+              value: {{ printf "%s-asset-mirror" (include "rolling-archive.fullname" .) | quote }}
+            - name: KAFKA_MAX_POLL_INTERVAL_MS
+              value: {{ .Values.assetMirror.kafkaMaxPollIntervalMs | quote }}
+            - name: CONCURRENCY
+              value: {{ .Values.assetMirror.concurrency | quote }}
+            - name: S3_HOST
+              value: {{ .Values.s3.host | quote }}
+            - name: S3_BUCKET
+              value: {{ .Values.s3.bucket | quote }}
+            - name: S3_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.s3.existingSecret }}
+                  key: S3_KEY
+            - name: S3_SECRET
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.s3.existingSecret }}
+                  key: S3_SECRET
+            - name: MIRROR_ASSETS
+              value: {{ .Values.assetMirror.mirrorAssets | quote }}
+            - name: ASSET_MIRROR_STRATEGY
+              value: {{ .Values.assetMirror.assetMirrorStrategy | quote }}
+            {{- if and .Values.assetMirror.mirrorAssets (eq .Values.assetMirror.assetMirrorStrategy "cdse_s3") }}
+            - name: CDSE_S3_ACCESS_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.assetMirror.cdseS3.existingSecret }}
+                  key: CDSE_S3_ACCESS_KEY
+            - name: CDSE_S3_SECRET_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.assetMirror.cdseS3.existingSecret }}
+                  key: CDSE_S3_SECRET_KEY
+            {{- end }}
+          {{- with .Values.assetMirror.resources }}
+          resources:
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
