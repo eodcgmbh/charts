@@ -64,18 +64,25 @@ worker:
   concurrency: 15
   resources: {}
   # -- Per-asset mirroring (ACM26-257): after archiving each product's whole ZIP,
-  # also mirror its individual files from CDSE's own S3 into our bucket, for HDA's
-  # fast-path cache -- covers every collection, on by default. Set false to disable
-  # across every worker replica without needing cdseS3.existingSecret to exist at
-  # all.
+  # also mirror its individual files into our bucket (under a separate
+  # "<providerId>_s3" prefix -- matches EODC's own eodag convention, see
+  # s3.providerId below), for HDA's fast-path cache -- covers every collection, on by
+  # default. Set false to disable across every worker replica.
   mirrorAssets: true
+  # "zip_extract" (default): extract from the ZIP already downloaded for archival, no
+  # second CDSE fetch at all -- needs no CDSE-S3 credential. "cdse_s3": re-fetch every
+  # file from CDSE's own S3 a second time -- kept as a fallback after an A/B
+  # comparison against real data showed zip_extract measurably halves CDSE fetches
+  # per product (see rolling-archive-hda-integration memory notes); needs
+  # cdseS3.existingSecret below if selected.
+  assetMirrorStrategy: zip_extract
   cdseS3:
     # Secret with keys CDSE_S3_ACCESS_KEY/CDSE_S3_SECRET_KEY -- CDSE S3 access keys,
     # generated via CDSE's dashboard (no API for this), NOT the per-account OAuth
-    # secrets below. Only required if mirrorAssets is true. Currently a single
-    # credential shared across every worker replica -- whether that's actually
-    # sufficient quota-wise (vs needing one per underlying CDSE account, like the
-    # OAuth accounts do) is NOT yet confirmed either way -- see
+    # secrets below. Only required if assetMirrorStrategy is "cdse_s3". Currently a
+    # single credential shared across every worker replica -- whether that's
+    # actually sufficient quota-wise (vs needing one per underlying CDSE account,
+    # like the OAuth accounts do) is NOT yet confirmed either way -- see
     # rolling-archive-hda-integration memory notes before assuming this scales.
     existingSecret: rolling-archive-cdse-s3-credentials
   # -- One Deployment per (tier, account) pair -- see rolling-archive-scope-manager's

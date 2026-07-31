@@ -51,27 +51,34 @@ S3/CEPH credentials are shared across every worker replica regardless of tier/ac
 
 ## Per-asset mirroring for HDA's fast-path cache (ACM26-257)
 
-`worker.mirrorAssets` (default `true`) mirrors every product's individual files from
-CDSE's own S3 (`eodata.dataspace.copernicus.eu` -- already unzipped there) into this
-bucket, nested under the same product prefix as the whole-ZIP object, so EODC's HDA
-service can serve individual assets (e.g. one Sentinel-2 band) straight from here
-instead of its slower Airflow-triggered on-demand extraction path. Covers every
-collection this pipeline archives, not just the ones HDA currently federates.
+`worker.mirrorAssets` (default `true`) mirrors every product's individual files into
+this bucket, under a separate `<providerId>_s3` prefix (a sibling of the whole-ZIP
+object's own prefix -- matches EODC's own `eodag` convention of `cop_dataspace` vs
+`cop_dataspace_s3` as two top-level folders, confirmed against real HDA URLs and the
+`eodc_eodag` source), so EODC's HDA service can serve individual assets (e.g. one
+Sentinel-2 band) straight from here instead of its slower Airflow-triggered on-demand
+extraction path. Covers every collection this pipeline archives, not just the ones
+HDA currently federates.
 
-Needs `worker.cdseS3.existingSecret` -- CDSE S3 access-key credentials (generated via
-CDSE's dashboard, no API for this), **not** the per-account OAuth secrets above.
-Currently a single credential shared across every worker replica regardless of tier/
-account -- whether that's actually sufficient CDSE-quota-wise (vs needing one per
-underlying account, like the OAuth accounts do) is **not yet confirmed**: consumer-tier
-CDSE accounts cap out at 12 TB/month transfer each, and it's unconfirmed whether S3
-access-key usage draws from the same per-account pool as OAuth/OData usage. Copernicus
-Service/Collaborative Network accounts have significantly higher allowances intended
-for exactly this kind of mirroring workload, but exact numbers aren't known yet --
-revisit this if real quota numbers surface reason to split into per-account
-credentials instead.
+`worker.assetMirrorStrategy` picks how those assets get mirrored -- two
+interchangeable strategies, both real and tested, chosen after an A/B comparison
+against real data:
+- **`zip_extract` (default)**: extract from the ZIP already downloaded for
+  archival -- no second CDSE fetch at all, no CDSE-S3 credential needed. Measurably
+  halves CDSE bandwidth/request consumption per product versus the alternative,
+  which matters given CDSE's real, quantified transfer quotas (see
+  rolling-archive-hda-integration memory notes -- consumer-tier accounts cap at
+  12 TB/month, shared between OData and S3 access as best as could be confirmed).
+- **`cdse_s3`**: re-fetch every file from CDSE's own S3
+  (`eodata.dataspace.copernicus.eu`) a second time. Needs `worker.cdseS3.existingSecret`
+  -- CDSE S3 access-key credentials (generated via CDSE's dashboard, no API for
+  this), **not** the per-account OAuth secrets above. Kept as a fallback, not
+  removed, in case real Service Account quota numbers ever make it preferable again
+  (e.g. if `zip_extract`'s per-pod resource cost turns out to matter more than the
+  extra CDSE fetch).
 
 Set `worker.mirrorAssets: false` to disable across every worker replica without
-needing `cdseS3.existingSecret` to exist at all.
+needing `cdseS3.existingSecret` to exist at all, regardless of strategy.
 
 ## Ingress and CDSE's push auth
 
@@ -96,9 +103,11 @@ actually exercised against a real CDSE push delivery yet.
 ## Validated so far
 
 `helm lint` and `helm template` clean with both default values and a multi-account
-(2 priority + 3 other accounts) + ingress/basic-auth override, and with
-`worker.mirrorAssets` both `true` (default) and `false` (confirms the CDSE-S3 env
-vars/secret reference disappear entirely when disabled). Every rendered resource
+(2 priority + 3 other accounts) + ingress/basic-auth override, with
+`worker.mirrorAssets` both `true` (default) and `false`, and with
+`worker.assetMirrorStrategy` both `zip_extract` (default, confirms the CDSE-S3 env
+vars/secret reference are absent) and `cdse_s3` (confirms they appear correctly).
+Every rendered resource
 passed a `kubectl apply --dry-run=server` against a real cluster with the actual
 Argo Events and Strimzi CRDs installed (caught one real bug this way: `KafkaTopic`'s
 `apiVersion` was written as the now-unserved `kafka.strimzi.io/v1beta2`, fixed to a

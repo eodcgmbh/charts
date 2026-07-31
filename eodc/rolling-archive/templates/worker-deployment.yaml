@@ -69,7 +69,9 @@ spec:
                   key: CDSE_PASSWORD
             - name: MIRROR_ASSETS
               value: {{ $.Values.worker.mirrorAssets | quote }}
-            {{- if $.Values.worker.mirrorAssets }}
+            - name: ASSET_MIRROR_STRATEGY
+              value: {{ $.Values.worker.assetMirrorStrategy | quote }}
+            {{- if and $.Values.worker.mirrorAssets (eq $.Values.worker.assetMirrorStrategy "cdse_s3") }}
             - name: CDSE_S3_ACCESS_KEY
               valueFrom:
                 secretKeyRef:
@@ -158,7 +160,9 @@ spec:
                   key: CDSE_PASSWORD
             - name: MIRROR_ASSETS
               value: {{ $.Values.worker.mirrorAssets | quote }}
-            {{- if $.Values.worker.mirrorAssets }}
+            - name: ASSET_MIRROR_STRATEGY
+              value: {{ $.Values.worker.assetMirrorStrategy | quote }}
+            {{- if and $.Values.worker.mirrorAssets (eq $.Values.worker.assetMirrorStrategy "cdse_s3") }}
             - name: CDSE_S3_ACCESS_KEY
               valueFrom:
                 secretKeyRef:
