@@ -62,6 +62,13 @@ worker:
   # Concurrent downloads per pod, and max Kafka records pulled per poll wave (10-20
   # per the architecture doc).
   concurrency: 15
+  # Well over Kafka's own 5-minute default -- confirmed live that a real large
+  # product's download time, combined with waiting for the rest of its poll wave to
+  # finish before the next poll()/commit(), can exceed it (CommitFailedError,
+  # consumer kicked from its group). Kept well under the priority tier's <1h SLA
+  # budget rather than as generous as assetMirror.kafkaMaxPollIntervalMs below --
+  # that consumer has no SLA urgency at all, this one does.
+  kafkaMaxPollIntervalMs: 900000
   resources: {}
   # -- One Deployment per (tier, account) pair -- see rolling-archive-scope-manager's
   # scope.yaml for the CDSE-subscription side of the same account pool. Each entry's

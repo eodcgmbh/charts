@@ -40,7 +40,9 @@ spec:
             - name: KAFKA_PRODUCT_UPLOADED_TOPIC
               value: {{ $.Values.kafka.topics.productUploaded | quote }}
             - name: CONCURRENCY
-              value: {{ $.Values.worker.concurrency | quote }}
+              value: {{ $.Values.worker.concurrency | int | quote }}
+            - name: KAFKA_MAX_POLL_INTERVAL_MS
+              value: {{ $.Values.worker.kafkaMaxPollIntervalMs | int | quote }}
             - name: PROVIDER_ID
               value: {{ $.Values.s3.providerId | quote }}
             - name: S3_HOST
@@ -115,7 +117,9 @@ spec:
             - name: KAFKA_PRODUCT_UPLOADED_TOPIC
               value: {{ $.Values.kafka.topics.productUploaded | quote }}
             - name: CONCURRENCY
-              value: {{ $.Values.worker.concurrency | quote }}
+              value: {{ $.Values.worker.concurrency | int | quote }}
+            - name: KAFKA_MAX_POLL_INTERVAL_MS
+              value: {{ $.Values.worker.kafkaMaxPollIntervalMs | int | quote }}
             - name: PROVIDER_ID
               value: {{ $.Values.s3.providerId | quote }}
             - name: S3_HOST

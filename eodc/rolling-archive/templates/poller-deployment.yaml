@@ -44,9 +44,9 @@ spec:
             - name: ENTRY_NAME
               value: {{ $entry.name | quote }}
             - name: POLL_INTERVAL_SECONDS
-              value: {{ $.Values.ingestion.poller.pollIntervalSeconds | quote }}
+              value: {{ $.Values.ingestion.poller.pollIntervalSeconds | int | quote }}
             - name: SUBSCRIPTION_RETRY_SECONDS
-              value: {{ $.Values.ingestion.poller.subscriptionRetrySeconds | quote }}
+              value: {{ $.Values.ingestion.poller.subscriptionRetrySeconds | int | quote }}
             - name: S3_HOST
               value: {{ $.Values.s3.host | quote }}
             - name: S3_BUCKET

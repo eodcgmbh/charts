@@ -83,6 +83,14 @@ in-code account-pooling scheduler (a decision already made earlier this project,
 intact here: account assignment lives entirely at the Helm layer, not in the worker's
 own code).
 
+`worker.kafkaMaxPollIntervalMs` (default 15 min, well over Kafka's own 5-min
+default) -- confirmed live that a real large product's download time, combined
+with waiting for the rest of its poll wave to finish before the next
+`poll()`/commit, can exceed the default and get the consumer evicted from its
+group mid-download. Kept well under the priority tier's `<1h` SLA rather than as
+generous as `assetMirror.kafkaMaxPollIntervalMs`'s 30 min -- that consumer has no
+SLA urgency at all, this one does.
+
 S3/CEPH credentials are shared across every worker replica regardless of tier/account
 (`s3.existingSecret`) -- CDSE account and S3 access are independent concerns.
 
@@ -170,10 +178,18 @@ CRDs installed (caught one real bug this way, in an earlier pass: `KafkaTopic`'s
 `apiVersion` was written as the now-unserved `kafka.strimzi.io/v1beta2`, fixed to a
 configurable `kafka.topicApiVersion`, default `kafka.strimzi.io/v1` -- **check this
 against the real target cluster's actual Strimzi version before deploying, don't
-assume the default is right there**). Never deployed against a real cluster for
-real, and push-mode/ingress/basic-auth has no *live* (non-dry-run) verification at
-all -- pull mode's poller has been live-tested (see rolling-archive-hda-integration
-memory notes), but not yet via this chart specifically, only via
+assume the default is right there**). Caught a second real bug the same way this
+session: Helm/Go renders large "round" numbers piped through `| quote` in
+scientific notation (e.g. `assetMirror.kafkaMaxPollIntervalMs: 1800000` rendered
+as the literal string `"1.8e+06"`) -- which `int()` in Python can't parse, so the
+container would have crashed at startup despite `helm template`/`helm lint` both
+passing cleanly (dry-run doesn't catch this, since it never actually runs the
+container). Fixed by piping every genuinely-numeric env var value through
+`| int | quote` instead of `| quote` alone, chart-wide. Never deployed against a
+real cluster for real, and push-mode/ingress/basic-auth has no *live* (non-dry-run)
+verification at all -- pull mode's poller has been live-tested (see
+rolling-archive-hda-integration memory notes), but not yet via this chart
+specifically, only via
 `local-testing`'s own k8s manifests.
 
 ## Development

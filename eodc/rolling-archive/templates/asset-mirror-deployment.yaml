@@ -37,9 +37,9 @@ spec:
             - name: KAFKA_GROUP_ID
               value: {{ printf "%s-asset-mirror" (include "rolling-archive.fullname" .) | quote }}
             - name: KAFKA_MAX_POLL_INTERVAL_MS
-              value: {{ .Values.assetMirror.kafkaMaxPollIntervalMs | quote }}
+              value: {{ .Values.assetMirror.kafkaMaxPollIntervalMs | int | quote }}
             - name: CONCURRENCY
-              value: {{ .Values.assetMirror.concurrency | quote }}
+              value: {{ .Values.assetMirror.concurrency | int | quote }}
             - name: S3_HOST
               value: {{ .Values.s3.host | quote }}
             - name: S3_BUCKET

@@ -38,7 +38,7 @@ spec:
             - name: STAC_API_BASE_URL
               value: {{ required "enricher.stacApiBaseUrl is required" .Values.enricher.stacApiBaseUrl | quote }}
             - name: POLL_BATCH_SIZE
-              value: {{ .Values.enricher.pollBatchSize | quote }}
+              value: {{ .Values.enricher.pollBatchSize | int | quote }}
           {{- with .Values.enricher.resources }}
           resources:
             {{- toYaml . | nindent 12 }}
