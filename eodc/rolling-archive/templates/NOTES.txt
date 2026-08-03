@@ -1,9 +1,10 @@
 Rolling Archive ({{ .Chart.Name }} {{ .Chart.AppVersion }}) has been deployed.
 
-This chart assumes a Kafka cluster (Strimzi) and the Argo Events controller already
-exist in this cluster -- it only creates the application-level resources on top:
-KafkaTopics on the existing cluster ({{ .Values.kafka.clusterName }}), and this
-pipeline's own EventBus/EventSource/Sensor/worker/enricher Deployments.
+This chart assumes a Kafka cluster (Strimzi) already exists in this cluster -- it
+only creates the application-level resources on top: KafkaTopics on the existing
+cluster ({{ .Values.kafka.clusterName }}), and this pipeline's own worker/enricher
+Deployments plus one of the two ingestion paths below, per ingestion.mode
+({{ .Values.ingestion.mode }}).
 
 Worker Deployments (one per CDSE account, per tier):
   priority ({{ .Values.worker.priority.topic }}):
@@ -15,10 +16,22 @@ Worker Deployments (one per CDSE account, per tier):
     - {{ include "rolling-archive.workerDeploymentName" (dict "context" $ "tier" "other" "account" .) }}
 {{- end }}
 
+{{- if eq .Values.ingestion.mode "pull" }}
+
+Ingestion: pull mode -- one poller Deployment per rolling-archive-scope-manager
+scope.yaml entry, no Argo Events/Ingress/public endpoint needed at all:
+{{- range .Values.ingestion.poller.entries }}
+    - {{ include "rolling-archive.pollerDeploymentName" (dict "context" $ "entry" .) }}
+{{- end }}
+{{- else }}
+
+Ingestion: push mode -- this chart also assumes the Argo Events controller exists
+in this cluster, and creates EventBus/EventSource/Sensor on top of it.
 {{- if not .Values.eventSource.ingress.enabled }}
 
-Ingress is disabled -- push-mode CDSE subscriptions won't be reachable. This is fine
-if rolling-archive-scope-manager's scope.yaml only uses subscription_type: pull.
+Ingress is disabled -- push-mode CDSE subscriptions won't be reachable until
+eventSource.ingress.enabled is set.
+{{- end }}
 {{- end }}
 
 None of this chart's Secrets (S3, CDSE accounts) are created by the chart itself --

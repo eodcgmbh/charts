@@ -1,3 +1,4 @@
+{{- if eq .Values.ingestion.mode "push" }}
 apiVersion: argoproj.io/v1alpha1
 kind: EventSource
 metadata:
@@ -31,3 +32,4 @@ spec:
       # Auth, so that's validated at the Ingress layer instead (see ingress.yaml).
       # These endpoints accept any POST unauthenticated if ingress-level auth isn't
       # enabled -- never exercised against a real CDSE push delivery yet.
+{{- end }}

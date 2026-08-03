@@ -1,3 +1,4 @@
+{{- if eq .Values.ingestion.mode "push" }}
 apiVersion: argoproj.io/v1alpha1
 kind: Sensor
 metadata:
@@ -45,3 +46,4 @@ spec:
                 dataKey: body
                 useRawData: true
               dest: "."
+{{- end }}

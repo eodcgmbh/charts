@@ -117,6 +117,50 @@ assetMirror:
     # rolling-archive-hda-integration memory notes before assuming this scales.
     existingSecret: rolling-archive-cdse-s3-credentials
 
+# -- Ingestion mode: "pull" (default) or "push". Push mode renders the Argo Events
+# resources below (eventBus/eventSource/sensor/ingress/RBAC) exactly as before; pull
+# mode renders poller Deployments instead (templates/poller-deployment.yaml). Both
+# code paths are kept, not deleted, so switching back is just this one value --
+# adopted pull as the default after a live comparison found it simplifies
+# deployment (no public endpoint/Ingress/DNS/TLS/webhook-Basic-Auth-workaround
+# needed at all) with no SLA cost (a 10-30s poll interval is a rounding error
+# against the <1h/<24h budgets) -- see rolling-archive-hda-integration / pull-vs-
+# push memory notes for the full comparison.
+ingestion:
+  mode: pull
+  poller:
+    resources: {}
+    # Failover, not throughput scaling -- live-tested safe: concurrent readers of
+    # one CDSE pull subscription see the same backlog (one shared ack cursor) and
+    # don't corrupt each other, so N replicas just means "still polling if one pod
+    # is unhealthy", not N-way parallelism. The only cost when both are healthy is
+    # occasional duplicate Kafka publishes, already absorbed by the download
+    # worker's own idempotency.
+    replicas: 2
+    # How often to re-poll once a subscription is known.
+    pollIntervalSeconds: 15
+    # How often to retry while no manifest exists yet for an entry (scope-manager
+    # hasn't reconciled it, or it's currently paused/deactivated) -- distinct from
+    # pollIntervalSeconds above.
+    subscriptionRetrySeconds: 30
+    # Mirrors kafka.topics.downloadHigh/downloadNormal -- kept separate because the
+    # poller picks ONE of these at runtime based on each entry's manifest-provided
+    # "tier", not from its own per-entry config (see entries below).
+    kafkaTopicPriority: download.high
+    kafkaTopicOther: download.normal
+    # -- One Deployment per PULL-mode rolling-archive-scope-manager scope.yaml
+    # entry, NOT per tier/account -- scope-manager explicitly allows one account to
+    # be shared across both tiers, so a poller keyed on account alone could
+    # misroute a product to the wrong topic. `name` must exactly match that entry's
+    # `name` in scope.yaml -- it's the manifest object key scope-manager writes
+    # after reconciling (_subscriptions/<name>.json), which is how this poller
+    # finds its subscription Id and tier without CDSE subscriptions needing a name
+    # of their own. `existingSecret` needs CDSE_USERNAME/CDSE_PASSWORD for that
+    # entry's `account` in scope.yaml.
+    entries:
+      - name: example-entry
+        existingSecret: cdse-account1-credentials
+
 enricher:
   replicas: 1
   resources: {}

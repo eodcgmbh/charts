@@ -44,3 +44,8 @@ app.kubernetes.io/instance: {{ .Release.Name }}
 {{- define "rolling-archive.workerDeploymentName" -}}
 {{- printf "%s-worker-%s-%s" (include "rolling-archive.fullname" .context) .tier .account.name | trunc 63 | trimSuffix "-" }}
 {{- end }}
+
+{{/* Name of a per-entry poller Deployment, e.g. <fullname>-poller-s1-grd-cog-aux-global. */}}
+{{- define "rolling-archive.pollerDeploymentName" -}}
+{{- printf "%s-poller-%s" (include "rolling-archive.fullname" .context) .entry.name | trunc 63 | trimSuffix "-" }}
+{{- end }}

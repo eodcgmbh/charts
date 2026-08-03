@@ -1,4 +1,4 @@
-{{- if .Values.eventSource.ingress.enabled }}
+{{- if and (eq .Values.ingestion.mode "push") .Values.eventSource.ingress.enabled }}
 {{- $ba := .Values.eventSource.ingress.basicAuth }}
 {{- if and $ba.enabled (not $ba.existingSecret) }}
 ---

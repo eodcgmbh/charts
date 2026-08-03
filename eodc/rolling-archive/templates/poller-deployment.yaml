@@ -1,0 +1,79 @@
+{{- if eq .Values.ingestion.mode "pull" }}
+{{- range $entry := .Values.ingestion.poller.entries }}
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "rolling-archive.pollerDeploymentName" (dict "context" $ "entry" $entry) }}
+  namespace: {{ $.Release.Namespace }}
+  labels:
+    {{- include "rolling-archive.labels" $ | nindent 4 }}
+    app.kubernetes.io/component: poller
+spec:
+  replicas: {{ $.Values.ingestion.poller.replicas }}
+  selector:
+    matchLabels:
+      {{- include "rolling-archive.selectorLabels" $ | nindent 6 }}
+      app.kubernetes.io/component: poller
+      rolling-archive/entry: {{ $entry.name }}
+  template:
+    metadata:
+      labels:
+        {{- include "rolling-archive.selectorLabels" $ | nindent 8 }}
+        app.kubernetes.io/component: poller
+        rolling-archive/entry: {{ $entry.name }}
+    spec:
+      {{- with $.Values.imagePullSecrets }}
+      imagePullSecrets:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      containers:
+        - name: poller
+          # Same image as the download worker -- a different entrypoint
+          # (pyproject.toml's [project.scripts]), not a separate image.
+          image: "{{ $.Values.image.registry }}/{{ $.Values.image.worker.repository }}:{{ $.Values.image.worker.tag | default $.Chart.AppVersion }}"
+          imagePullPolicy: {{ $.Values.image.pullPolicy }}
+          command: ["rolling-archive-pull-poller"]
+          env:
+            - name: KAFKA_BOOTSTRAP
+              value: {{ $.Values.kafka.bootstrap | quote }}
+            - name: KAFKA_TOPIC_PRIORITY
+              value: {{ $.Values.ingestion.poller.kafkaTopicPriority | quote }}
+            - name: KAFKA_TOPIC_OTHER
+              value: {{ $.Values.ingestion.poller.kafkaTopicOther | quote }}
+            - name: ENTRY_NAME
+              value: {{ $entry.name | quote }}
+            - name: POLL_INTERVAL_SECONDS
+              value: {{ $.Values.ingestion.poller.pollIntervalSeconds | quote }}
+            - name: SUBSCRIPTION_RETRY_SECONDS
+              value: {{ $.Values.ingestion.poller.subscriptionRetrySeconds | quote }}
+            - name: S3_HOST
+              value: {{ $.Values.s3.host | quote }}
+            - name: S3_BUCKET
+              value: {{ $.Values.s3.bucket | quote }}
+            - name: S3_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: {{ $.Values.s3.existingSecret }}
+                  key: S3_KEY
+            - name: S3_SECRET
+              valueFrom:
+                secretKeyRef:
+                  name: {{ $.Values.s3.existingSecret }}
+                  key: S3_SECRET
+            - name: CDSE_USERNAME
+              valueFrom:
+                secretKeyRef:
+                  name: {{ $entry.existingSecret }}
+                  key: CDSE_USERNAME
+            - name: CDSE_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: {{ $entry.existingSecret }}
+                  key: CDSE_PASSWORD
+          {{- with $.Values.ingestion.poller.resources }}
+          resources:
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
+{{- end }}
+{{- end }}
