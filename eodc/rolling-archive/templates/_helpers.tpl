@@ -35,17 +35,17 @@ app.kubernetes.io/name: {{ include "rolling-archive.name" . }}
 app.kubernetes.io/instance: {{ .Release.Name }}
 {{- end }}
 
-{{/* Name of the ServiceAccount used by the Sensor. */}}
-{{- define "rolling-archive.serviceAccountName" -}}
-{{- printf "%s-sensor" (include "rolling-archive.fullname" .) }}
-{{- end }}
-
-{{/* Name of a per-account worker Deployment, e.g. <fullname>-worker-priority-account1. */}}
-{{- define "rolling-archive.workerDeploymentName" -}}
-{{- printf "%s-worker-%s-%s" (include "rolling-archive.fullname" .context) .tier .account.name | trunc 63 | trimSuffix "-" }}
-{{- end }}
-
 {{/* Name of a per-entry poller Deployment, e.g. <fullname>-poller-s1-grd-cog-aux-global. */}}
 {{- define "rolling-archive.pollerDeploymentName" -}}
 {{- printf "%s-poller-%s" (include "rolling-archive.fullname" .context) .entry.name | trunc 63 | trimSuffix "-" }}
+{{- end }}
+
+{{/*
+A bank-vaults placeholder value, resolved into a real secret by the cluster's
+vault-secrets-webhook at pod admission time -- NOT a real value itself. See
+templates/secrets-from-vault.yaml for the full explanation and precedent.
+Usage: include "rolling-archive.vaultRef" (dict "context" $ "slug" "s3" "field" "key")
+*/}}
+{{- define "rolling-archive.vaultRef" -}}
+vault:{{ .context.Values.vault.mount }}/data/{{ .context.Values.vault.basePath }}/{{ .slug }}#{{ .field }}
 {{- end }}

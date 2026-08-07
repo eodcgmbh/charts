@@ -11,204 +11,132 @@ image:
   worker:
     repository: rolling-archive/rolling-archive-worker
     tag: ""              # defaults to .Chart.AppVersion when empty
-  enricher:
-    repository: rolling-archive/rolling-archive-enricher
-    tag: ""
   pullPolicy: IfNotPresent
 
-# -- This chart assumes a Kafka cluster (Strimzi) and the Argo Events controller
-# already exist in the target cluster -- provisioning those is out of this chart's
-# scope (ask the cluster-managing team). This chart only creates the application-level
-# resources on top: KafkaTopics on that existing cluster, and our own
-# EventBus/EventSource/Sensor.
-kafka:
-  # Name of the existing Strimzi Kafka cluster CR -- used to label our KafkaTopics
-  # (strimzi.io/cluster) so the operator picks them up.
-  clusterName: my-cluster
-  bootstrap: my-cluster-kafka-bootstrap.kafka.svc:9092
-  # Must match whatever Strimzi version the real cluster runs -- Strimzi has moved
-  # KafkaTopic through v1beta1 -> v1beta2 -> v1 over time, and only ONE is actually
-  # served by any given install (confirmed the hard way: v1beta2, assumed from an
-  # earlier Strimzi version, wasn't served at all by the local-testing cluster's
-  # current install -- only kafka.strimzi.io/v1 was). Check with
-  # `kubectl api-resources | grep -i kafkatopic` against the real target cluster
-  # before deploying, don't assume this default is right there.
-  topicApiVersion: kafka.strimzi.io/v1
-  # Only the topics this pipeline actually produces/consumes today. product.discovered
-  # and download.requests are reserved for the not-yet-built Airflow reconciliation
-  # piece -- see rolling-archive-scope-manager's README -- and deliberately not
-  # created here until that exists and needs them.
-  topics:
-    downloadHigh: download.high
-    downloadNormal: download.normal
-    productUploaded: product.uploaded
-    productAvailable: product.available
-    partitions: 3
-    replicationFactor: 3
-
-# -- S3/CEPH is the sole source of truth for idempotency (no metadata DB). One shared
-# bucket and one shared set of S3 credentials across every worker replica, regardless
-# of which CDSE account that replica uses for downloading -- S3 access and CDSE
-# account are independent concerns.
+# -- S3/CEPH is the sole source of truth for idempotency (no metadata DB). The
+# poller only reads it to look up each entry's subscription manifest
+# (rolling-archive-scope-manager writes _subscriptions/<entry>.json here) -- the
+# actual download/upload happens inside Airflow tasks, not this chart's own
+# workload.
 s3:
-  host: https://objectstore.eodc.eu:2222
-  bucket: eodag
-  # Secret with keys S3_KEY/S3_SECRET. This chart never creates it -- populated via
-  # Vault (cluster/secrets/*.yaml), per EODC's deployment strategy.
+  host: https://objects.eodc.eu:443
+  # This is the FALLBACK bucket only -- high-volume/high-object-count collections
+  # get their own dedicated bucket instead (rolling_archive_worker/buckets.py's
+  # bucket_for(), derived from this value, e.g. "eodag-s2-msi-l2a"), to keep
+  # object count per bucket manageable per EODC IT's guidance. Not a chart value --
+  # always derived by that one function, so there's exactly one place deciding
+  # bucket assignment.
+  sharedBucket: eodag
+  # Secret with keys S3_KEY/S3_SECRET. If vault.enabled is true, this chart
+  # creates it itself (templates/secrets-from-vault.yaml) with placeholder
+  # values the cluster's vault-secrets-webhook resolves -- see the chart
+  # README's Secrets section. If vault.enabled is false (e.g. local-testing),
+  # something else must create this Secret with real plaintext values.
   existingSecret: rolling-archive-s3-credentials
-  providerId: cop_dataspace
 
-worker:
-  # Concurrent downloads per pod, and max Kafka records pulled per poll wave (10-20
-  # per the architecture doc).
-  concurrency: 15
-  # Well over Kafka's own 5-minute default -- confirmed live that a real large
-  # product's download time, combined with waiting for the rest of its poll wave to
-  # finish before the next poll()/commit(), can exceed it (CommitFailedError,
-  # consumer kicked from its group). Kept well under the priority tier's <1h SLA
-  # budget rather than as generous as assetMirror.kafkaMaxPollIntervalMs below --
-  # that consumer has no SLA urgency at all, this one does.
-  kafkaMaxPollIntervalMs: 900000
+# -- Real, confirmed mechanism (2026-08-07): EODC runs bank-vaults'
+# vault-secrets-webhook cluster-wide (both k8s-infra and k8s-production/
+# k8s-development), which resolves `vault:<mount>/data/<path>#<field>`
+# placeholder values -- found in a committed Secret this chart creates itself
+# (templates/secrets-from-vault.yaml) AND read by a pod carrying the
+# vault.security.banzaicloud.io/* annotations below -- into real values at pod
+# admission time. `access` is the KV mount dedicated to the `eodc/mission/access`
+# GitLab subgroup Rolling Archive is being ported to
+# (https://vault.assembly.eodc.eu/ui/vault/secrets/access/list), confirmed via
+# the same `vault:assembly/data/...#...` pattern already live for platform-level
+# secrets (cluster-mgmt/charts/resource-controllers).
+vault:
+  # false by default (e.g. local-testing/kind, which has no real Vault/webhook
+  # at all) -- set true for a real k8s-production/k8s-development deployment.
+  enabled: false
+  addr: https://vault.assembly.eodc.eu
+  # Confirmed 2026-08-07 (stefan, direct answer from Assembly Mission): the
+  # real Vault role is "development" or "production", matching the cluster
+  # this Application is deployed to -- no chart-level default makes sense here,
+  # each Application manifest must set this explicitly.
+  role: ""
+  mount: access
+  basePath: rolling-archive
+
+# -- The actual download/mirror/enrich pipeline runs as Airflow DAGs
+# (rolling-archive-dags, deployed via k8s-infra's existing airflow-v3.yaml
+# Application -- NOT by this chart, no Dockerfile/chart/ArgoCD Application of its
+# own). This chart's only remaining workload is the poller: it watches CDSE pull
+# subscriptions and triggers a DagRun per notification via the Airflow REST API.
+# Superseded the earlier Kafka-consumer-based worker/asset-mirror/enricher
+# Deployments and the Argo-Events push path entirely -- see rolling-archive-worker's
+# README for the full architecture-migration writeup.
+poller:
   resources: {}
-  # -- One Deployment per (tier, account) pair -- see rolling-archive-scope-manager's
-  # scope.yaml for the CDSE-subscription side of the same account pool. Each entry's
-  # existingSecret needs CDSE_USERNAME/CDSE_PASSWORD keys, via Vault, never created by
-  # this chart. There is deliberately no in-code account-pooling/scheduling logic (a
-  # decision already made for this project) -- account assignment is entirely at the
-  # Helm/deployment layer: one replica, one Deployment, one account, each.
-  priority:
-    topic: download.high
-    accounts:
-      - name: account1
-        existingSecret: cdse-account1-credentials
-  other:
-    topic: download.normal
-    accounts:
-      - name: account2
-        existingSecret: cdse-account2-credentials
-
-# -- Per-asset mirroring for HDA's fast-path cache (ACM26-257): a SEPARATE, single
-# Deployment (not per-account/per-tier like worker.* above -- it consumes
-# product.uploaded on its own Kafka consumer group, needs no CDSE OAuth credential of
-# any kind under the default strategy) that mirrors each archived product's
-# individual files into a sibling "<providerId>_s3" prefix (see s3.providerId above),
-# covering every collection this pipeline archives. Deliberately split out from the
-# worker Deployments above: a real, live-tested 373-asset Sentinel-1 product took
-# long enough to extract that it tripped Kafka's max.poll.interval.ms on an inline
-# implementation, evicting the download consumer mid-processing -- this consumer's
-# own poll-loop timing (kafkaMaxPollIntervalMs below) can be tuned independently
-# since it has no download-SLA urgency at all.
-assetMirror:
-  replicas: 1
-  resources: {}
-  concurrency: 5
-  # Deliberately far more generous than Kafka's 5-minute default -- see the section
-  # comment above for why.
-  kafkaMaxPollIntervalMs: 1800000
-  # Set false to disable across every asset-mirror replica.
-  mirrorAssets: true
-  # "zip_extract" (default): re-reads the whole-ZIP object already archived in OUR
-  # OWN bucket -- no CDSE fetch at all, no CDSE-S3 credential needed. "cdse_s3":
-  # re-fetch every file from CDSE's own S3 a second time -- kept as a fallback after
-  # an A/B comparison against real data showed zip_extract measurably halves CDSE
-  # fetches per product (see rolling-archive-hda-integration memory notes); needs
-  # cdseS3.existingSecret below if selected.
-  assetMirrorStrategy: zip_extract
-  cdseS3:
-    # Secret with keys CDSE_S3_ACCESS_KEY/CDSE_S3_SECRET_KEY -- CDSE S3 access keys,
-    # generated via CDSE's dashboard (no API for this), NOT the worker's per-account
-    # OAuth secrets. Only required if assetMirrorStrategy is "cdse_s3". Currently a
-    # single credential shared across every replica -- whether that's actually
-    # sufficient quota-wise (vs needing one per underlying CDSE account, like the
-    # OAuth accounts do) is NOT yet confirmed either way -- see
-    # rolling-archive-hda-integration memory notes before assuming this scales.
-    existingSecret: rolling-archive-cdse-s3-credentials
-
-# -- Ingestion mode: "pull" (default) or "push". Push mode renders the Argo Events
-# resources below (eventBus/eventSource/sensor/ingress/RBAC) exactly as before; pull
-# mode renders poller Deployments instead (templates/poller-deployment.yaml). Both
-# code paths are kept, not deleted, so switching back is just this one value --
-# adopted pull as the default after a live comparison found it simplifies
-# deployment (no public endpoint/Ingress/DNS/TLS/webhook-Basic-Auth-workaround
-# needed at all) with no SLA cost (a 10-30s poll interval is a rounding error
-# against the <1h/<24h budgets) -- see rolling-archive-hda-integration / pull-vs-
-# push memory notes for the full comparison.
-ingestion:
-  mode: pull
-  poller:
-    resources: {}
-    # Failover, not throughput scaling -- live-tested safe: concurrent readers of
-    # one CDSE pull subscription see the same backlog (one shared ack cursor) and
-    # don't corrupt each other, so N replicas just means "still polling if one pod
-    # is unhealthy", not N-way parallelism. The only cost when both are healthy is
-    # occasional duplicate Kafka publishes, already absorbed by the download
-    # worker's own idempotency.
-    replicas: 2
-    # How often to re-poll once a subscription is known.
-    pollIntervalSeconds: 15
-    # How often to retry while no manifest exists yet for an entry (scope-manager
-    # hasn't reconciled it, or it's currently paused/deactivated) -- distinct from
-    # pollIntervalSeconds above.
-    subscriptionRetrySeconds: 30
-    # Mirrors kafka.topics.downloadHigh/downloadNormal -- kept separate because the
-    # poller picks ONE of these at runtime based on each entry's manifest-provided
-    # "tier", not from its own per-entry config (see entries below).
-    kafkaTopicPriority: download.high
-    kafkaTopicOther: download.normal
-    # -- One Deployment per PULL-mode rolling-archive-scope-manager scope.yaml
-    # entry, NOT per tier/account -- scope-manager explicitly allows one account to
-    # be shared across both tiers, so a poller keyed on account alone could
-    # misroute a product to the wrong topic. `name` must exactly match that entry's
-    # `name` in scope.yaml -- it's the manifest object key scope-manager writes
-    # after reconciling (_subscriptions/<name>.json), which is how this poller
-    # finds its subscription Id and tier without CDSE subscriptions needing a name
-    # of their own. `existingSecret` needs CDSE_USERNAME/CDSE_PASSWORD for that
-    # entry's `account` in scope.yaml.
-    entries:
-      - name: example-entry
-        existingSecret: cdse-account1-credentials
-
-enricher:
-  replicas: 1
-  resources: {}
-  # Required, no default -- EODC's real STAC API host.
-  stacApiBaseUrl: ""
-  # Max Kafka records pulled per poll wave. No download/upload I/O here, so this can
-  # be generous compared to worker.concurrency.
-  pollBatchSize: 50
-
-eventBus:
-  jetstreamVersion: latest
-
-eventSource:
-  # Fixed container port the webhook server listens on -- change only if it collides
-  # with something else in the same namespace.
-  port: 12000
-  ingress:
-    # Push-mode CDSE subscriptions need a public HTTPS endpoint -- disabled by default
-    # since pull-mode (rolling-archive-scope-manager's subscription_type: pull) needs
-    # no ingress at all. Enable once the cluster team has ingress/DNS/TLS in place.
-    enabled: false
-    className: ""
-    annotations: {}
-    host: rolling-archive.example.eodc.eu
-    tls: []
-    # - secretName: rolling-archive-tls
-    #   hosts:
-    #     - rolling-archive.example.eodc.eu
-    basicAuth:
-      # CDSE's real push callback authenticates with plain HTTP Basic Auth, using the
-      # NotificationEpUsername/Password registered on the subscription (confirmed
-      # against CloudFerro's push_subscription_endpoint_example reference). Argo
-      # Events' own webhook EventSource only supports a Bearer-token authSecret, not
-      # Basic Auth, so this has to be validated at the Ingress layer instead --
-      # assumes an nginx-ingress controller (nginx.ingress.kubernetes.io/auth-*
-      # annotations); this repo has charts using both apisix and nginx elsewhere, so
-      # adjust if the real cluster's ingress controller differs. Never actually
-      # exercised against a real CDSE push delivery yet.
-      enabled: false
-      # If set, used as-is (must be an htpasswd-format Secret with an `auth` key) --
-      # otherwise one is generated from username/password below.
-      existingSecret: ""
-      username: ""
-      password: ""
+  # Failover, not throughput scaling -- live-tested safe: concurrent readers of one
+  # CDSE pull subscription see the same backlog (one shared ack cursor) and don't
+  # corrupt each other, so N replicas just means "still polling if one pod is
+  # unhealthy", not N-way parallelism. The only cost when both are healthy is
+  # occasional duplicate DagRun triggers, already absorbed by
+  # airflow_trigger.ensure_dag_run()'s own idempotency check.
+  replicas: 2
+  # How often to re-poll once a subscription is known.
+  pollIntervalSeconds: 15
+  # How often to retry while no manifest exists yet for an entry (scope-manager
+  # hasn't reconciled it, or it's currently paused/deactivated) -- distinct from
+  # pollIntervalSeconds above.
+  subscriptionRetrySeconds: 30
+  airflow:
+    # Required, no default: this Airflow instance's own API base URL, e.g.
+    # https://airflow-v3.dev.services.eodc.eu -- not something to guess at.
+    baseUrl: ""
+    # Secret with keys AIRFLOW_USERNAME/AIRFLOW_PASSWORD. Airflow's `simple` auth
+    # manager issues short-lived JWT bearer tokens from these via /auth/token --
+    # confirmed live that plain HTTP Basic Auth does NOT work directly against the
+    # API on this instance, unlike some older Airflow-2-era integrations. Never
+    # created by this chart -- via Vault.
+    existingSecret: rolling-archive-airflow-credentials
+    # Must match rolling-archive-dags' actual DAG ids.
+    dagIdPriority: rolling_archive_download_priority
+    dagIdNormal: rolling_archive_download_normal
+  # -- One Deployment per PULL-mode rolling-archive-scope-manager scope.yaml entry,
+  # NOT per tier/account -- scope-manager explicitly allows one account to be
+  # shared across both tiers, so a poller keyed on account alone could trigger the
+  # wrong tier's DAG. `name` must exactly match that entry's `name` in scope.yaml --
+  # it's the manifest object key scope-manager writes after reconciling
+  # (_subscriptions/<name>.json), which is how this poller finds its subscription
+  # Id and tier without CDSE subscriptions needing a name of their own.
+  # `existingSecret` needs `username`/`password` keys (+ optional `totp_secret`
+  # for 2FA-enabled accounts) for that entry's `account` in scope.yaml -- lowercase
+  # keys deliberately, matching rolling-archive-dags/_common.py's own convention
+  # for the SAME account Secrets on the Airflow-task side, since one real CDSE
+  # account's Secret is shared between both consumers (poller here, Airflow
+  # KubernetesPodOperator tasks there) -- see the chart README's Secrets section.
+  #
+  # This list must be kept in sync with rolling-archive-scope-manager/scope.yaml's
+  # `subscriptions` by hand -- nothing derives one from the other automatically.
+  # Matches scope.yaml as of its 2026-08-06 expansion to 12 entries/18 collections;
+  # re-check this list whenever scope.yaml's entry names or account assignments
+  # change. Account-to-secret naming matches the existing cdse-account{N}-
+  # credentials convention (see rolling-archive-worker's worker-deployment
+  # history) -- never created by this chart.
+  entries:
+    - name: s1-grd-global
+      existingSecret: cdse-account1-credentials
+    - name: s1-aux-global
+      existingSecret: cdse-account1-credentials
+    - name: s1-cog-europe
+      existingSecret: cdse-account2-credentials
+    - name: s1-other-global
+      existingSecret: cdse-account2-credentials
+    - name: s1-slc-europe
+      existingSecret: cdse-account3-credentials
+    - name: s2-msi-europe
+      existingSecret: cdse-account3-credentials
+    - name: s2-aux-global
+      existingSecret: cdse-account4-credentials
+    - name: s3-europe
+      existingSecret: cdse-account4-credentials
+    - name: s3-synergy-global
+      existingSecret: cdse-account5-credentials
+    - name: s3-aux-global
+      existingSecret: cdse-account5-credentials
+    - name: s5p-europe
+      existingSecret: cdse-account5-credentials
+    - name: s5p-aux-global
+      existingSecret: cdse-account5-credentials

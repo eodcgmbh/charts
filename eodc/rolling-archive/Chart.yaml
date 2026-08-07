@@ -4,13 +4,17 @@ description: >-
   Mirrors Copernicus Data Space Ecosystem (CDSE) Sentinel products into CEPH S3 with a
   configurable, short retention window. CEPH S3 is the sole source of truth -- no
   metadata database. Two-tier priority (Sentinel-1 GRD+AUX near-real-time, everything
-  else best-effort) routed via CDSE subscription/webhook endpoint, not message content.
+  else best-effort) routed via CDSE subscription, not message content. This chart
+  deploys only the pull poller -- the actual download/mirror/enrich pipeline runs as
+  Airflow DAGs (rolling-archive-dags), triggered by the poller via the Airflow REST
+  API, deployed separately via k8s-infra's existing Airflow Application.
 type: application
-version: 0.1.0
-appVersion: "0.1.0"
+version: 0.2.0
+appVersion: "0.2.0"
 home: https://git.eodc.eu/sreimond/rolling-archive-worker
 sources:
   - https://git.eodc.eu/sreimond/cdse-client
   - https://git.eodc.eu/sreimond/rolling-archive-worker
   - https://git.eodc.eu/sreimond/rolling-archive-enricher
   - https://git.eodc.eu/sreimond/rolling-archive-scope-manager
+  - https://git.eodc.eu/sreimond/rolling-archive-dags

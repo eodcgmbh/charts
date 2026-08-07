@@ -1,39 +1,21 @@
 Rolling Archive ({{ .Chart.Name }} {{ .Chart.AppVersion }}) has been deployed.
 
-This chart assumes a Kafka cluster (Strimzi) already exists in this cluster -- it
-only creates the application-level resources on top: KafkaTopics on the existing
-cluster ({{ .Values.kafka.clusterName }}), and this pipeline's own worker/enricher
-Deployments plus one of the two ingestion paths below, per ingestion.mode
-({{ .Values.ingestion.mode }}).
+This chart's only workload is the pull poller -- one Deployment per
+rolling-archive-scope-manager scope.yaml entry, no Kafka/Argo-Events/Ingress/public
+endpoint needed at all. It watches CDSE pull subscriptions and triggers a DagRun in
+{{ .Values.poller.airflow.baseUrl }} per notification.
 
-Worker Deployments (one per CDSE account, per tier):
-  priority ({{ .Values.worker.priority.topic }}):
-{{- range .Values.worker.priority.accounts }}
-    - {{ include "rolling-archive.workerDeploymentName" (dict "context" $ "tier" "priority" "account" .) }}
-{{- end }}
-  other ({{ .Values.worker.other.topic }}):
-{{- range .Values.worker.other.accounts }}
-    - {{ include "rolling-archive.workerDeploymentName" (dict "context" $ "tier" "other" "account" .) }}
-{{- end }}
-
-{{- if eq .Values.ingestion.mode "pull" }}
-
-Ingestion: pull mode -- one poller Deployment per rolling-archive-scope-manager
-scope.yaml entry, no Argo Events/Ingress/public endpoint needed at all:
-{{- range .Values.ingestion.poller.entries }}
+Poller Deployments:
+{{- range .Values.poller.entries }}
     - {{ include "rolling-archive.pollerDeploymentName" (dict "context" $ "entry" .) }}
 {{- end }}
-{{- else }}
 
-Ingestion: push mode -- this chart also assumes the Argo Events controller exists
-in this cluster, and creates EventBus/EventSource/Sensor on top of it.
-{{- if not .Values.eventSource.ingress.enabled }}
+The actual download/mirror/enrich pipeline runs as Airflow DAGs
+({{ .Values.poller.airflow.dagIdPriority }} / {{ .Values.poller.airflow.dagIdNormal }}
+in rolling-archive-dags) -- deployed via k8s-infra's existing airflow-v3.yaml
+Application, not by this chart.
 
-Ingress is disabled -- push-mode CDSE subscriptions won't be reachable until
-eventSource.ingress.enabled is set.
-{{- end }}
-{{- end }}
-
-None of this chart's Secrets (S3, CDSE accounts) are created by the chart itself --
-populate {{ .Values.s3.existingSecret }} and each worker account's existingSecret via
-Vault (cluster/secrets/*.yaml) before this will actually run.
+None of this chart's Secrets (S3, Airflow, CDSE accounts) are created by the chart
+itself -- populate {{ .Values.s3.existingSecret }}, {{ .Values.poller.airflow.existingSecret }},
+and each entry's existingSecret via Vault (cluster/secrets/*.yaml) before this will
+actually run.

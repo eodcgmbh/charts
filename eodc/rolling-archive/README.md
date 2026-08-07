@@ -7,192 +7,172 @@ metadata database; retention is enforced purely via S3 bucket lifecycle policies
 [rolling-archive-scope-manager](https://git.eodc.eu/sreimond/rolling-archive-scope-manager),
 not by this chart).
 
+## Architecture: this chart deploys only the poller
+
+**As of the Airflow-rebuild migration (2026-08), the actual download/mirror/enrich
+pipeline runs as Airflow DAGs**
+([rolling-archive-dags](https://git.eodc.eu/sreimond/rolling-archive-dags) --
+plain `dags/` subfolder, no Dockerfile/chart/ArgoCD Application of its own, deployed
+by adding one `dagBundleConfigList` entry to k8s-infra's existing `airflow-v3.yaml`
+Application), not by this chart. This chart's **only remaining workload is the pull
+poller** (`templates/poller-deployment.yaml`): it watches CDSE pull subscriptions
+and triggers an Airflow DagRun per notification via the REST API
+(`dag_run_id` = the CDSE product id, idempotent re-triggering).
+
+This supersedes an earlier Kafka-consumer-based design (download/asset-mirror/
+enricher Deployments, each with their own Kafka consumer group, plus an
+Argo-Events push-mode alternative to the poller) -- all removed from this chart,
+not deprecated-in-place. See
+[rolling-archive-worker](https://git.eodc.eu/sreimond/rolling-archive-worker)'s
+README for the full migration writeup and reasoning (in short: EOPF, a comparable-
+volume sibling EODC pipeline, runs its equivalent CDSE-mirroring step on Airflow
+alone with no message broker at all -- proven precedent this pipeline now follows).
+
 ## What this chart assumes already exists
 
-- **A Kafka cluster (Strimzi) in the target cluster.** This chart only creates
-  `KafkaTopic`s on top of it (`kafka.clusterName` must match the existing `Kafka` CR's
-  name) -- it does not provision the broker cluster itself.
-- **The Argo Events controller -- only if `ingestion.mode: push`.** In that mode
-  this chart creates `EventBus`/`EventSource`/`Sensor` custom resources, not the
-  controller. Not needed at all in the default `pull` mode (see "Ingestion mode"
-  below) -- nothing in this chart requires Argo Events unless you opt into push.
-- **CDSE and S3 credentials, via Vault.** Every `existingSecret` referenced in
-  `values.yaml` (`s3.existingSecret`, each `worker.<tier>.accounts[].existingSecret`,
-  and in pull mode each `ingestion.poller.entries[].existingSecret`) must already
-  exist in the release namespace -- this chart never creates Secrets with real
-  credentials in them (see `cluster/secrets/*.yaml` in the infra repo).
+- **CDSE, S3, and Airflow credentials, via Vault.** Every `existingSecret`
+  referenced in `values.yaml` must already exist in the release namespace with
+  REAL values -- this chart itself only ever writes `vault:...` placeholder
+  strings into them (see the Secrets section below), never a real credential. If
+  `vault.enabled: false` (e.g. local-testing, no real Vault/webhook available),
+  something else entirely must create these Secrets with real plaintext values.
+  How a value gets from Vault into one of these Secrets DOES differ by cluster
+  generation for platform-level bootstrap secrets, but for application-level
+  secrets like these it's the SAME mechanism everywhere: bank-vaults'
+  `vault-secrets-webhook`, confirmed installed cluster-wide (both `k8s-infra` and
+  `k8s-production`/`k8s-development`) -- see below.
+- **A reachable Airflow instance running the `rolling-archive-dags` DAGs**
+  (`poller.airflow.baseUrl`), with `rolling-archive-priority`/`rolling-archive-normal`
+  Airflow Pools already created -- neither is provisioned by this chart.
 
-Ask the cluster-managing team about the first two before deploying for real.
+No Kafka/Strimzi cluster and no Argo Events controller are needed anymore --
+neither is assumed or referenced by anything in this chart.
 
-## Ingestion mode: `pull` (default) or `push` -- both kept, switchable, not deleted
+## Secrets mechanism: bank-vaults' `vault-secrets-webhook` (confirmed, cluster-wide)
 
-`ingestion.mode` picks which whole subsystem this chart deploys to detect new CDSE
-products and hand them to Kafka. Adopted `pull` as the default after a live
-comparison found it simplifies deployment substantially (no public
-endpoint/Ingress/DNS/TLS/webhook-Basic-Auth-workaround needed at all -- the poller
-only makes outbound calls) with no cost to the two-tier `<1h`/`<24h` SLA (a 10-30s
-poll interval is a rounding error against either budget) -- see
-rolling-archive-hda-integration / pull-vs-push memory notes for the full write-up.
-**Both code paths are real and kept, not one built and one theoretical** -- switching
-back is just this one value.
+Real, live precedent found in `cluster-mgmt/charts/resource-controllers`
+(installs the OpenStack cloud-controller-manager's `cloud.conf` this exact way)
+and confirmed installed on `k8s-infra` too (`inf-vault-webhook`/
+`dev-vault-webhook` Applications): commit a plain Kubernetes `Secret` whose
+values are literal `vault:<mount>/data/<path>#<field>` strings (NOT real
+credentials), and annotate the consuming pod's template with
+`vault.security.banzaicloud.io/vault-addr`/`vault-role` -- the cluster's
+mutating admission webhook resolves the placeholder into a real value before
+the container starts. Application code never sees the difference; it just reads
+a normal environment variable.
 
-### `pull` mode: one poller Deployment per scope.yaml entry
+When `vault.enabled: true`, this chart's `templates/secrets-from-vault.yaml`
+creates all 7 Secrets below itself (deduplicated by `existingSecret` name) with
+these placeholder values, and `templates/poller-deployment.yaml` adds the
+required annotations to the poller pod template. `vault.mount: access` is the
+KV-v2 mount dedicated to the `eodc/mission/access` GitLab subgroup Rolling
+Archive is being ported to
+(`https://vault.assembly.eodc.eu/ui/vault/secrets/access/list`);
+`vault.basePath: rolling-archive` groups everything under
+`access/rolling-archive/*`. **Still needed, and NOT something this chart or
+Helm can do**: someone with write access to that Vault mount running
+`vault kv put access/rolling-archive/<slug> <field>=<realvalue>` for each of the
+7 rows below, and confirming the real `vault.role` (the Vault Kubernetes-auth
+role that authorizes reading `access/data/rolling-archive/*` from
+`k8s-production` -- other real examples at EODC use a role matching the
+cluster/environment name, e.g. `"production"`, but that's precedent, not a
+confirmed value for this specific mount. Ask Assembly Mission.).
 
-`ingestion.poller.entries` -- one Deployment per **`rolling-archive-scope-manager`
-scope.yaml entry**, not per tier or per account. This granularity matters:
-scope-manager explicitly allows one CDSE account to be shared across *both* tiers
-(no 1:1 account↔tier rule exists), so a poller keyed on account alone could
-silently publish a product to the wrong Kafka topic. Since CDSE subscriptions carry
-no name of their own (only exact `FilterParam` string equality identifies one),
-each entry here just needs a `name` matching its scope.yaml counterpart exactly --
-scope-manager writes a `{subscription_id, tier}` manifest object per pull-mode
-entry after each reconciliation, which the poller reads to resolve its subscription
-and target topic (`download.high` vs `download.normal`) without either repo
+## Secrets this chart needs (and shares with `rolling-archive-dags`)
+
+Seven distinct Secrets, each consumed by **two** independent workloads that must
+therefore agree on key names -- this chart's poller Deployments, and
+`rolling-archive-dags/dags/_common.py`'s `KubernetesPodOperator` tasks (which run
+in Airflow, not via this chart, but read the SAME underlying CDSE/S3 credentials).
+One real secret value per row below, not two:
+
+| `existingSecret` name | Keys | Vault path (`vault.enabled: true`) | Read by |
+|---|---|---|---|
+| `rolling-archive-s3-credentials` (`s3.existingSecret`) | `S3_KEY`, `S3_SECRET` | `access/rolling-archive/s3` (`key`, `secret`) | Poller directly. Also the Airflow tasks, IF `ROLLING_ARCHIVE_S3_SECRET=rolling-archive-s3-credentials`, `ROLLING_ARCHIVE_S3_KEY_KEY=S3_KEY`, `ROLLING_ARCHIVE_S3_SECRET_KEY_KEY=S3_SECRET` are set on the Airflow instance's own Helm values -- `_common.py` otherwise defaults to a `minio-credentials`/`root-user`/`root-password` local-testing convention that does NOT exist in a real cluster. |
+| `rolling-archive-airflow-credentials` (`poller.airflow.existingSecret`) | `AIRFLOW_USERNAME`, `AIRFLOW_PASSWORD` | `access/rolling-archive/airflow` (`username`, `password`) | Poller only -- a real Airflow API user with permission to trigger DAG runs, see the gotcha below. |
+| `cdse-account1-credentials` … `cdse-account5-credentials` (one per `poller.entries[].existingSecret`, several entries share the same account) | `username`, `password`, optional `totp_secret` | `access/rolling-archive/cdse-account1` … `cdse-account5` (same field names) | Poller directly. Also the Airflow download task, IF `ROLLING_ARCHIVE_CDSE_ACCOUNTS` on the Airflow instance lists these same 5 names (comma-separated, contiguous `CDSE_ACCOUNT1.._5` order) -- `_common.py` otherwise defaults to a single `cdse-credentials` secret, which only covers a single-account local-testing setup. |
+
+The `username`/`password`/`totp_secret` key casing for CDSE account Secrets is
+deliberate and load-bearing: `_common.py` hardcodes those exact lowercase key
+names (not configurable), so this chart's own poller template reads the same
+keys rather than a chart-specific alternative -- otherwise one real CDSE account
+would need its credentials duplicated under two different key names in two
+different Secrets.
+
+**Also required, but on the Airflow instance's own Helm values, not this
+chart**: `ROLLING_ARCHIVE_NAMESPACE` (must match wherever the Airflow instance
+actually schedules `KubernetesPodOperator` pods -- defaults to `airflow`, almost
+certainly wrong for a real instance), `ROLLING_ARCHIVE_WORKER_IMAGE` /
+`ROLLING_ARCHIVE_ENRICHER_IMAGE` (defaults to local-testing `:local` tags),
+`ROLLING_ARCHIVE_S3_HOST` / `ROLLING_ARCHIVE_S3_SHARED_BUCKET` (should match this
+chart's own `s3.host`/`s3.sharedBucket` exactly, same underlying CEPH bucket).
+None of `_common.py`'s `ROLLING_ARCHIVE_*` env vars are set by this chart -- it
+has no way to reach into a separate Airflow Application's Helm values.
+
+## One poller Deployment per `rolling-archive-scope-manager` scope.yaml entry
+
+`poller.entries` -- one Deployment per entry, not per tier or per account. This
+granularity matters: scope-manager explicitly allows one CDSE account to be shared
+across *both* tiers (no 1:1 account↔tier rule exists), so a poller keyed on account
+alone could trigger the wrong tier's DAG. Since CDSE subscriptions carry no name of
+their own (only exact `FilterParam` string equality identifies one), each entry
+here just needs a `name` matching its scope.yaml counterpart exactly --
+scope-manager writes a `{subscription_id, tier}` manifest object per entry after
+each reconciliation, which the poller reads to resolve its subscription and target
+DAG (`poller.airflow.dagIdPriority` vs `dagIdNormal`) without either repo
 duplicating the other's `FilterParam`-matching logic.
 
-`ingestion.poller.replicas` defaults to **2, deliberately, live-tested safe**: two
-independent readers of one CDSE pull subscription see the *exact same* backlog (one
-shared ack cursor, not per-reader leases) and don't corrupt each other -- this gives
-failover, not throughput scaling, at zero cost in custom leader-election logic. The
-only "waste" when both replicas are healthy is occasional duplicate Kafka publishes,
-already absorbed by the download worker's own S3-existence-check idempotency.
+`poller.replicas` defaults to **2, deliberately, live-tested safe**: two independent
+readers of one CDSE pull subscription see the *exact same* backlog (one shared ack
+cursor, not per-reader leases) and don't corrupt each other -- this gives failover,
+not throughput scaling, at zero cost in custom leader-election logic. The only
+"waste" when both replicas are healthy is occasional duplicate DagRun triggers,
+already absorbed by `airflow_trigger.ensure_dag_run()`'s own idempotency check
+(itself sitting on top of the download task's S3-existence-check idempotency).
 
-### `push` mode: routed by CDSE subscription, not message content
+## Airflow authentication -- a real, live-confirmed gotcha
 
-Tier (`priority`/`other`) is decided by which of two webhook paths
-(`/cdse/priority`, `/cdse/other`) a CDSE subscription's `NotificationEndpoint` points
-at -- set by `rolling-archive-scope-manager`'s reconciler, not by this chart. The
-`Sensor` does a trivial 1:1 pass-through per path straight to
-`download.high`/`download.normal`, with **no content-based classification at all**.
-This replaced an earlier design that regex-matched message content downstream; that
-worked but silently drifted out of sync once already (missed a GRD product variant) --
-moving the tier decision upstream removes that whole bug class. Same principle pull
-mode's manifest-based routing follows, just via a different handoff mechanism.
+Airflow's `simple` auth manager (the default for a fresh install) issues
+short-lived **JWT bearer tokens via `POST /auth/token`**, not plain HTTP Basic Auth
+on the API itself -- confirmed live against a local Airflow instance that Basic
+Auth returns `401 Not authenticated` on `/api/v2/...` directly. `poller.airflow.
+existingSecret`'s `AIRFLOW_USERNAME`/`AIRFLOW_PASSWORD` keys are used against
+`/auth/token` (see `rolling-archive-worker`'s `airflow_trigger.get_token()`), which
+the poller re-fetches fresh every poll cycle rather than caching across the loop --
+simpler than tracking token expiry, and cheap at this poll interval.
 
-## CDSE accounts: one Deployment per account, no in-code pooling
+## Multi-bucket layout: `s3.sharedBucket` is a fallback, not the only bucket
 
-`worker.priority.accounts`/`worker.other.accounts` are lists -- one `Deployment` (fixed
-at `replicas: 1`) is templated per entry, each with its own `existingSecret`
-(`CDSE_USERNAME`/`CDSE_PASSWORD` keys). All accounts within a tier share one Kafka
-consumer group (`<release>-worker-<tier>`), so Kafka load-balances `download.high`/
-`download.normal` across however many account-Deployments exist in that tier --
-scaling account count is just adding entries to the list, no code change. Deliberately
-NOT a `StatefulSet` with ordinal-based account selection (considered and rejected --
-more k8s machinery than N Deployments for the same outcome), and deliberately NOT an
-in-code account-pooling scheduler (a decision already made earlier this project, kept
-intact here: account assignment lives entirely at the Helm layer, not in the worker's
-own code).
-
-`worker.kafkaMaxPollIntervalMs` (default 15 min, well over Kafka's own 5-min
-default) -- confirmed live that a real large product's download time, combined
-with waiting for the rest of its poll wave to finish before the next
-`poll()`/commit, can exceed the default and get the consumer evicted from its
-group mid-download. Kept well under the priority tier's `<1h` SLA rather than as
-generous as `assetMirror.kafkaMaxPollIntervalMs`'s 30 min -- that consumer has no
-SLA urgency at all, this one does.
-
-S3/CEPH credentials are shared across every worker replica regardless of tier/account
-(`s3.existingSecret`) -- CDSE account and S3 access are independent concerns.
-
-## Per-asset mirroring for HDA's fast-path cache (ACM26-257)
-
-A **separate, single Deployment** (`assetMirror.*`, not part of `worker.*` above) --
-`<fullname>-asset-mirror`, same image as the download worker, different entrypoint
-(`command: ["rolling-archive-asset-mirror"]`) -- consumes `product.uploaded` on its
-own Kafka consumer group and mirrors every product's individual files into this
-bucket, under a separate `<providerId>_s3` prefix (a sibling of the whole-ZIP
-object's own prefix -- matches EODC's own `eodag` convention of `cop_dataspace` vs
-`cop_dataspace_s3` as two top-level folders, confirmed against real HDA URLs and the
-`eodc_eodag` source), so EODC's HDA service can serve individual assets (e.g. one
-Sentinel-2 band) straight from here instead of its slower Airflow-triggered on-demand
-extraction path. Covers every collection this pipeline archives, not just the ones
-HDA currently federates.
-
-**Why a separate Deployment, not part of the download worker**: this used to run
-inline in the download worker, but a real, live-tested 373-asset Sentinel-1 product
-took long enough to extract that it tripped Kafka's `max.poll.interval.ms` on the
-download worker's own consumer group, evicting it mid-processing. Splitting it out
-means the download worker (CDSE-download-bound, never that slow on its own) and this
-consumer (extraction-bound, no download-SLA urgency at all) tune their poll-loop
-timing independently -- `assetMirror.kafkaMaxPollIntervalMs` defaults to 30 minutes,
-vs. Kafka's plain 5-minute default for the download worker. Also simpler to deploy:
-no per-CDSE-account fan-out needed here at all (the default strategy needs no CDSE
-credential of any kind), so it's a plain single/multi-replica Deployment like the
-enricher, not the download worker's N-Deployments-per-tier pattern.
-
-`assetMirror.assetMirrorStrategy` picks how assets get mirrored -- two
-interchangeable strategies, both real and tested, chosen after an A/B comparison
-against real data:
-- **`zip_extract` (default)**: re-reads the whole-ZIP object already archived in OUR
-  OWN bucket -- no CDSE fetch at all, no CDSE-S3 credential needed. Measurably halves
-  CDSE bandwidth/request consumption per product versus the alternative, which
-  matters given CDSE's real, quantified transfer quotas (see
-  rolling-archive-hda-integration memory notes -- consumer-tier accounts cap at
-  12 TB/month, shared between OData and S3 access as best as could be confirmed).
-- **`cdse_s3`**: re-fetch every file from CDSE's own S3
-  (`eodata.dataspace.copernicus.eu`) a second time. Needs
-  `assetMirror.cdseS3.existingSecret` -- CDSE S3 access-key credentials (generated
-  via CDSE's dashboard, no API for this), **not** the download worker's per-account
-  OAuth secrets. Kept as a fallback, not removed, in case real Service Account quota
-  numbers ever make it preferable again (e.g. if `zip_extract`'s per-pod resource
-  cost turns out to matter more than the extra CDSE fetch).
-
-Set `assetMirror.mirrorAssets: false` to disable this Deployment's mirroring without
-needing `cdseS3.existingSecret` to exist at all, regardless of strategy (or just
-don't deploy it -- it's independent of the download worker either way).
-
-## Ingress and CDSE's push auth (only relevant if `ingestion.mode: push`)
-
-The Ingress template never renders at all in the default `pull` mode, regardless of
-`eventSource.ingress.enabled`'s value. In `push` mode, it's still disabled by
-default (`eventSource.ingress.enabled: false`) -- enable it plus a real ingress
-controller, DNS, and TLS (ask the cluster team) to actually receive CDSE's push
-callbacks.
-
-CDSE's real push callback authenticates with plain HTTP Basic Auth, using the
-`NotificationEpUsername`/`NotificationEpPassword` credentials registered on the
-subscription (confirmed against CloudFerro's
-[push_subscription_endpoint_example](https://gitlab.cloudferro.com/cat_public/push_subscription_endpoint_example)
-reference implementation). Argo Events' own webhook `EventSource` only supports a
-Bearer-token `authSecret`, not Basic Auth, so this chart validates it at the Ingress
-layer instead: set `eventSource.ingress.basicAuth.enabled: true` plus
-`username`/`password` (or `existingSecret` for an already-htpasswd-formatted Secret),
-and the Ingress gets `nginx.ingress.kubernetes.io/auth-*` annotations. **This assumes
-an nginx-ingress controller** -- this charts repo has examples using both `nginx` and
-`apisix` elsewhere, adjust if the real target cluster uses something else. Never
-actually exercised against a real CDSE push delivery yet.
+`s3.sharedBucket` (renamed from `s3.bucket`) is only where the poller's
+subscription manifests and non-dedicated collections' objects live. High-volume/
+high-object-count collections (e.g. `S2_MSI_L2A`) get their own dedicated bucket
+instead, named by deriving from `s3.sharedBucket` itself
+(`rolling_archive_worker.buckets.bucket_for()`, e.g. `eodag-s2-msi-l2a`) -- not a
+chart value, so there's exactly one place (that function) deciding bucket
+assignment across the poller, the Airflow tasks, and `rolling-archive-scope-
+manager`'s lifecycle rules. Real dedicated buckets themselves are provisioned by
+IT, not this chart -- same as `s3.sharedBucket` already is today.
 
 ## Validated so far
 
-`helm lint` and `helm template` clean with both default values and a multi-account
-(2 priority + 3 other accounts) + ingress/basic-auth override, with
-`assetMirror.mirrorAssets` both `true` (default) and `false`, `assetMirror.
-assetMirrorStrategy` both `zip_extract` (default) and `cdse_s3`, and with
-`ingestion.mode` both `pull` (default -- confirms Argo Events/Ingress/RBAC/
-ServiceAccount are all absent, poller Deployment renders) and `push` (confirms the
-reverse: EventBus/EventSource/Sensor/RBAC/ServiceAccount render, poller doesn't,
-and Ingress renders too when `eventSource.ingress.enabled` is also set). Every
-rendered resource, in both ingestion modes, passed a `kubectl apply
---dry-run=server` against a real cluster with the actual Argo Events and Strimzi
-CRDs installed (caught one real bug this way, in an earlier pass: `KafkaTopic`'s
-`apiVersion` was written as the now-unserved `kafka.strimzi.io/v1beta2`, fixed to a
-configurable `kafka.topicApiVersion`, default `kafka.strimzi.io/v1` -- **check this
-against the real target cluster's actual Strimzi version before deploying, don't
-assume the default is right there**). Caught a second real bug the same way this
-session: Helm/Go renders large "round" numbers piped through `| quote` in
-scientific notation (e.g. `assetMirror.kafkaMaxPollIntervalMs: 1800000` rendered
-as the literal string `"1.8e+06"`) -- which `int()` in Python can't parse, so the
-container would have crashed at startup despite `helm template`/`helm lint` both
-passing cleanly (dry-run doesn't catch this, since it never actually runs the
-container). Fixed by piping every genuinely-numeric env var value through
-`| int | quote` instead of `| quote` alone, chart-wide. Never deployed against a
-real cluster for real, and push-mode/ingress/basic-auth has no *live* (non-dry-run)
-verification at all -- pull mode's poller has been live-tested (see
-rolling-archive-hda-integration memory notes), but not yet via this chart
-specifically, only via
-`local-testing`'s own k8s manifests.
+`helm lint`/`helm template` clean with default values and a multi-entry override.
+The poller's *previous* (Kafka-publishing) incarnation was live-tested against a
+real cluster via this chart's manifests (see rolling-archive-hda-integration /
+pull-vs-push memory notes) -- the *rewritten* (Airflow-triggering) poller has been
+live-tested directly (real token fetch, idempotent trigger/skip against a real
+local Airflow instance -- see rolling-archive-worker's own test suite and README),
+but **not yet redeployed via this specific chart** to confirm the new
+`AIRFLOW_*` env vars render and resolve correctly end-to-end in-cluster. Do that
+before trusting this chart's poller-deployment.yaml as-is in a real environment.
+
+Also caught and fixed, still applicable: Helm/Go renders large "round" numbers
+piped through `| quote` in scientific notation (e.g. `1800000` rendering as the
+literal string `"1.8e+06"`) -- unparseable by Python's `int()`, crashing the
+container at startup despite clean `helm lint`/`template` (dry-run never actually
+starts the container). Every genuinely-numeric env var value in
+`poller-deployment.yaml` is piped through `| int | quote`, not bare `| quote`.
 
 ## Development
 
-    helm lint . --set enricher.stacApiBaseUrl=https://stac.example.eodc.eu
-    helm template test . --set enricher.stacApiBaseUrl=https://stac.example.eodc.eu
+    helm lint .
+    helm template test . --set poller.airflow.baseUrl=https://airflow-v3.dev.services.eodc.eu
