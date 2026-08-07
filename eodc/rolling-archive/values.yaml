@@ -26,7 +26,7 @@ s3:
   # object count per bucket manageable per EODC IT's guidance. Not a chart value --
   # always derived by that one function, so there's exactly one place deciding
   # bucket assignment.
-  sharedBucket: eodag
+  sharedBucket: eodag-others
   # Secret with keys S3_KEY/S3_SECRET. If vault.enabled is true, this chart
   # creates it itself (templates/secrets-from-vault.yaml) with placeholder
   # values the cluster's vault-secrets-webhook resolves -- see the chart
