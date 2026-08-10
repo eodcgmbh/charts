@@ -6,10 +6,19 @@ fullnameOverride: ""
 imagePullSecrets: []
 # - name: regcred
 
+# registry.eodc.eu is GitLab's own built-in Container Registry at
+# git.eodc.eu, exposed under this custom hostname -- NOT a separate external
+# registry (confirmed 2026-08-10 against eodag-server/eodc-catalogue, two
+# real EODC services using the identical $CI_REGISTRY_IMAGE mechanism).
+# repository is always <GitLab namespace>/<project path> (== $CI_REGISTRY_IMAGE
+# minus the host) -- currently the personal "sreimond" namespace
+# rolling-archive-worker still lives in; update this the day that repo moves
+# to eodc/mission/access (see this project's own placement decision), since
+# $CI_REGISTRY_IMAGE -- and therefore the real pushed path -- changes with it.
 image:
   registry: registry.eodc.eu
   worker:
-    repository: rolling-archive/rolling-archive-worker
+    repository: sreimond/rolling-archive-worker
     tag: ""              # defaults to .Chart.AppVersion when empty
   pullPolicy: IfNotPresent
 
