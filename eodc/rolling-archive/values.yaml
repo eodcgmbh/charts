@@ -28,6 +28,10 @@ image:
 # actual download/upload happens inside Airflow tasks, not this chart's own
 # workload.
 s3:
+  # Only used when vault.enabled is false (e.g. local-testing) -- when Vault-
+  # backed, the poller reads S3_HOST from the SAME Secret as S3_KEY/S3_SECRET
+  # instead (see templates/secrets-from-vault.yaml's "host" field), one real
+  # endpoint value rather than also duplicating it here.
   host: https://objects.eodc.eu:443
   # This is the FALLBACK bucket only -- high-volume/high-object-count collections
   # get their own dedicated bucket instead (rolling_archive_worker/buckets.py's

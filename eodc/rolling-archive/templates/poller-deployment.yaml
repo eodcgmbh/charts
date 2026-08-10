@@ -70,8 +70,21 @@ spec:
               value: {{ $.Values.poller.pollIntervalSeconds | int | quote }}
             - name: SUBSCRIPTION_RETRY_SECONDS
               value: {{ $.Values.poller.subscriptionRetrySeconds | int | quote }}
+            # When Vault-backed, S3_HOST comes from the same Secret as S3_KEY/
+            # S3_SECRET (one real endpoint value, one source of truth, rather
+            # than also duplicating it into values.yaml) -- s3.host stays a
+            # plain fallback for local-testing (vault.enabled: false), which
+            # has no Vault/webhook to resolve a Secret-sourced value at all.
+            {{- if $.Values.vault.enabled }}
+            - name: S3_HOST
+              valueFrom:
+                secretKeyRef:
+                  name: {{ $.Values.s3.existingSecret }}
+                  key: S3_HOST
+            {{- else }}
             - name: S3_HOST
               value: {{ $.Values.s3.host | quote }}
+            {{- end }}
             - name: S3_SHARED_BUCKET
               value: {{ $.Values.s3.sharedBucket | quote }}
             - name: S3_KEY
