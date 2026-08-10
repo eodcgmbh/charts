@@ -48,8 +48,21 @@ spec:
           imagePullPolicy: {{ $.Values.image.pullPolicy }}
           command: ["rolling-archive-pull-poller"]
           env:
+            # When Vault-backed, AIRFLOW_BASE_URL comes from the same Secret as
+            # AIRFLOW_USERNAME/AIRFLOW_PASSWORD -- one real value, one source of
+            # truth, and easy to rotate if this URL changes (e.g. the platform
+            # team's OpenStack/cluster migration). poller.airflow.baseUrl stays
+            # a plain fallback for local-testing (vault.enabled: false).
+            {{- if $.Values.vault.enabled }}
+            - name: AIRFLOW_BASE_URL
+              valueFrom:
+                secretKeyRef:
+                  name: {{ $.Values.poller.airflow.existingSecret }}
+                  key: AIRFLOW_BASE_URL
+            {{- else }}
             - name: AIRFLOW_BASE_URL
               value: {{ $.Values.poller.airflow.baseUrl | quote }}
+            {{- end }}
             - name: AIRFLOW_USERNAME
               valueFrom:
                 secretKeyRef:
