@@ -83,6 +83,10 @@ spec:
               value: {{ $.Values.poller.pollIntervalSeconds | int | quote }}
             - name: SUBSCRIPTION_RETRY_SECONDS
               value: {{ $.Values.poller.subscriptionRetrySeconds | int | quote }}
+            - name: BATCH_MAX_SIZE
+              value: {{ $.Values.poller.batchMaxSize | int | quote }}
+            - name: BATCH_MAX_SECONDS
+              value: {{ $.Values.poller.batchMaxSeconds | quote }}
             # When Vault-backed, S3_HOST comes from the same Secret as S3_KEY/
             # S3_SECRET (one real endpoint value, one source of truth, rather
             # than also duplicating it into values.yaml) -- s3.host stays a

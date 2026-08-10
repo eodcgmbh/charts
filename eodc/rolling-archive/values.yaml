@@ -94,6 +94,18 @@ poller:
   # hasn't reconciled it, or it's currently paused/deactivated) -- distinct from
   # pollIntervalSeconds above.
   subscriptionRetrySeconds: 30
+  # -- Batch multiple pending CDSE notifications into one Airflow DagRun
+  # (count-or-time, whichever fires first) instead of one DagRun per
+  # notification, to amortize per-product pod-launch overhead at real
+  # production volume. batchMaxSize=1 (the default) reproduces today's exact
+  # per-notification trigger behavior -- batching is opt-in. batchMaxSeconds is
+  # irrelevant at the default size-1, since a single item always immediately
+  # satisfies the size condition. See rolling-archive-worker's
+  # pull_poller_worker.py for the accumulate-then-flush logic itself, and its
+  # docstring for the accepted head-of-line-blocking trade-off larger batches
+  # introduce.
+  batchMaxSize: 1
+  batchMaxSeconds: 0
   airflow:
     # Required, no default: this Airflow instance's own API base URL, e.g.
     # https://airflow-v3.dev.services.eodc.eu -- not something to guess at.
