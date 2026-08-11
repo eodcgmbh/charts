@@ -114,33 +114,12 @@ poller:
   # account's Secret is shared between both consumers (poller here, Airflow
   # KubernetesPodOperator tasks there) -- see the chart README's Secrets section.
   #
-  # This list must be kept in sync with rolling-archive-scope-manager/scope.yaml's
-  # `subscriptions` by hand -- nothing derives one from the other automatically;
-  # re-check whenever scope.yaml's entry names or account assignments change.
-  # Account-to-secret naming matches the cdse-account{N}-credentials convention
-  # -- never created by this chart.
-  entries:
-    - name: s1-grd-global
-      existingSecret: cdse-account1-credentials
-    - name: s1-aux-global
-      existingSecret: cdse-account1-credentials
-    - name: s1-cog-europe
-      existingSecret: cdse-account2-credentials
-    - name: s1-other-global
-      existingSecret: cdse-account2-credentials
-    - name: s1-slc-europe
-      existingSecret: cdse-account3-credentials
-    - name: s2-msi-europe
-      existingSecret: cdse-account3-credentials
-    - name: s2-aux-global
-      existingSecret: cdse-account4-credentials
-    - name: s3-europe
-      existingSecret: cdse-account4-credentials
-    - name: s3-synergy-global
-      existingSecret: cdse-account5-credentials
-    - name: s3-aux-global
-      existingSecret: cdse-account5-credentials
-    - name: s5p-europe
-      existingSecret: cdse-account5-credentials
-    - name: s5p-aux-global
-      existingSecret: cdse-account5-credentials
+  # No default -- every deployment sets its own list explicitly. Must be kept
+  # in sync with rolling-archive-scope-manager/scope.yaml's `subscriptions` by
+  # hand (nothing derives one from the other automatically). Account-to-secret
+  # naming matches the cdse-account{N}-credentials convention -- never created
+  # by this chart. Example shape:
+  #   entries:
+  #     - name: dev-smoke-test
+  #       existingSecret: cdse-account-dev-credentials
+  entries: []
