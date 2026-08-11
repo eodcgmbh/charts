@@ -66,7 +66,19 @@ vault:
 # watches CDSE pull subscriptions and triggers a DagRun per batch via the
 # Airflow REST API.
 poller:
-  resources: {}
+  # A lightweight, mostly-idle process (sleep loop + occasional HTTP calls, no
+  # download/upload work itself) -- deliberately smaller than the download/
+  # mirror_assets Airflow tasks' own 250m/256Mi request, 1/1Gi limit. No
+  # namespace-level LimitRange exists in k8s-development/k8s-production to
+  # apply a default otherwise, so this chart sets one explicitly rather than
+  # leaving the poller unbounded.
+  resources:
+    requests:
+      cpu: 25m
+      memory: 64Mi
+    limits:
+      cpu: 200m
+      memory: 128Mi
   # Failover, not throughput scaling -- live-tested safe: concurrent readers of one
   # CDSE pull subscription see the same backlog (one shared ack cursor) and don't
   # corrupt each other, so N replicas just means "still polling if one pod is
