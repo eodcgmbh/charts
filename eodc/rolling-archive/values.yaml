@@ -11,14 +11,12 @@ imagePullSecrets: []
 # registry (confirmed 2026-08-10 against eodag-server/eodc-catalogue, two
 # real EODC services using the identical $CI_REGISTRY_IMAGE mechanism).
 # repository is always <GitLab namespace>/<project path> (== $CI_REGISTRY_IMAGE
-# minus the host) -- currently the personal "sreimond" namespace
-# rolling-archive-worker still lives in; update this the day that repo moves
-# to eodc/mission/access (see this project's own placement decision), since
-# $CI_REGISTRY_IMAGE -- and therefore the real pushed path -- changes with it.
+# minus the host) -- rolling-archive-worker moved to eodc/mission/access on
+# 2026-08-11, so the real pushed path changed with it (was sreimond/...).
 image:
   registry: registry.eodc.eu
   worker:
-    repository: sreimond/rolling-archive-worker
+    repository: eodc/mission/access/rolling-archive-worker
     tag: ""              # defaults to .Chart.AppVersion when empty
   pullPolicy: IfNotPresent
 
@@ -72,13 +70,11 @@ vault:
   basePath: rolling-archive
 
 # -- The actual download/mirror/enrich pipeline runs as Airflow DAGs
-# (rolling-archive-dags, deployed via k8s-infra's existing airflow-v3.yaml
-# Application -- NOT by this chart, no Dockerfile/chart/ArgoCD Application of its
-# own). This chart's only remaining workload is the poller: it watches CDSE pull
-# subscriptions and triggers a DagRun per notification via the Airflow REST API.
-# Superseded the earlier Kafka-consumer-based worker/asset-mirror/enricher
-# Deployments and the Argo-Events push path entirely -- see rolling-archive-worker's
-# README for the full architecture-migration writeup.
+# (rolling-archive-dags, deployed via the real Airflow instance's own
+# dagBundleConfigList -- NOT by this chart, no Dockerfile/chart/ArgoCD
+# Application of its own). This chart's only workload is the poller: it
+# watches CDSE pull subscriptions and triggers a DagRun per batch via the
+# Airflow REST API.
 poller:
   resources: {}
   # Failover, not throughput scaling -- live-tested safe: concurrent readers of one

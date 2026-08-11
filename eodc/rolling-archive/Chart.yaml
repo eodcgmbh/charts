@@ -11,10 +11,10 @@ description: >-
 type: application
 version: 0.2.0
 appVersion: "0.2.0"
-home: https://git.eodc.eu/sreimond/rolling-archive-worker
+home: https://git.eodc.eu/eodc/mission/access/rolling-archive-worker
 sources:
-  - https://git.eodc.eu/sreimond/cdse-client
-  - https://git.eodc.eu/sreimond/rolling-archive-worker
-  - https://git.eodc.eu/sreimond/rolling-archive-enricher
-  - https://git.eodc.eu/sreimond/rolling-archive-scope-manager
-  - https://git.eodc.eu/sreimond/rolling-archive-dags
+  - https://git.eodc.eu/eodc/mission/access/cdse-client
+  - https://git.eodc.eu/eodc/mission/access/rolling-archive-worker
+  - https://git.eodc.eu/eodc/mission/access/rolling-archive-enricher
+  - https://git.eodc.eu/eodc/mission/access/rolling-archive-scope-manager
+  - https://git.eodc.eu/eodc/mission/access/rolling-archive-dags

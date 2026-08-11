@@ -4,49 +4,32 @@ Mirrors Copernicus Data Space Ecosystem (CDSE) Sentinel products into CEPH S3 wi
 configurable, short retention window. CEPH S3 is the sole source of truth -- no
 metadata database; retention is enforced purely via S3 bucket lifecycle policies
 (applied separately by
-[rolling-archive-scope-manager](https://git.eodc.eu/sreimond/rolling-archive-scope-manager),
+[rolling-archive-scope-manager](https://git.eodc.eu/eodc/mission/access/rolling-archive-scope-manager),
 not by this chart).
 
 ## Architecture: this chart deploys only the poller
 
-**As of the Airflow-rebuild migration (2026-08), the actual download/mirror/enrich
-pipeline runs as Airflow DAGs**
-([rolling-archive-dags](https://git.eodc.eu/sreimond/rolling-archive-dags) --
+The actual download/mirror/enrich pipeline runs as Airflow DAGs
+([rolling-archive-dags](https://git.eodc.eu/eodc/mission/access/rolling-archive-dags) --
 plain `dags/` subfolder, no Dockerfile/chart/ArgoCD Application of its own, deployed
-by adding one `dagBundleConfigList` entry to k8s-infra's existing `airflow-v3.yaml`
-Application), not by this chart. This chart's **only remaining workload is the pull
-poller** (`templates/poller-deployment.yaml`): it watches CDSE pull subscriptions
-and triggers an Airflow DagRun per notification via the REST API
-(`dag_run_id` = the CDSE product id, idempotent re-triggering).
-
-This supersedes an earlier Kafka-consumer-based design (download/asset-mirror/
-enricher Deployments, each with their own Kafka consumer group, plus an
-Argo-Events push-mode alternative to the poller) -- all removed from this chart,
-not deprecated-in-place. See
-[rolling-archive-worker](https://git.eodc.eu/sreimond/rolling-archive-worker)'s
-README for the full migration writeup and reasoning (in short: EOPF, a comparable-
-volume sibling EODC pipeline, runs its equivalent CDSE-mirroring step on Airflow
-alone with no message broker at all -- proven precedent this pipeline now follows).
+via a `dagBundleConfigList` entry on the real Airflow instance), not by this chart.
+This chart's **only workload is the pull poller** (`templates/poller-deployment.yaml`):
+it watches CDSE pull subscriptions and triggers an Airflow DagRun per batch of
+notifications via the REST API (`dag_run_id` derived from the batch, for
+idempotent re-triggering).
 
 ## What this chart assumes already exists
 
 - **CDSE, S3, and Airflow credentials, via Vault.** Every `existingSecret`
   referenced in `values.yaml` must already exist in the release namespace with
-  REAL values -- this chart itself only ever writes `vault:...` placeholder
-  strings into them (see the Secrets section below), never a real credential. If
-  `vault.enabled: false` (e.g. local-testing, no real Vault/webhook available),
-  something else entirely must create these Secrets with real plaintext values.
-  How a value gets from Vault into one of these Secrets DOES differ by cluster
-  generation for platform-level bootstrap secrets, but for application-level
-  secrets like these it's the SAME mechanism everywhere: bank-vaults'
-  `vault-secrets-webhook`, confirmed installed cluster-wide (both `k8s-infra` and
-  `k8s-production`/`k8s-development`) -- see below.
+  REAL values -- this chart only ever writes `vault:...` placeholder strings into
+  them (see the Secrets section below). If `vault.enabled: false` (e.g.
+  local-testing), something else must create these Secrets with real plaintext
+  values. The mechanism is the same everywhere: bank-vaults'
+  `vault-secrets-webhook`, cluster-wide -- see below.
 - **A reachable Airflow instance running the `rolling-archive-dags` DAGs**
   (`poller.airflow.baseUrl`), with `rolling-archive-priority`/`rolling-archive-normal`
   Airflow Pools already created -- neither is provisioned by this chart.
-
-No Kafka/Strimzi cluster and no Argo Events controller are needed anymore --
-neither is assumed or referenced by anything in this chart.
 
 ## Secrets mechanism: bank-vaults' `vault-secrets-webhook` (confirmed, cluster-wide)
 
@@ -156,14 +139,12 @@ IT, not this chart -- same as `s3.sharedBucket` already is today.
 ## Validated so far
 
 `helm lint`/`helm template` clean with default values and a multi-entry override.
-The poller's *previous* (Kafka-publishing) incarnation was live-tested against a
-real cluster via this chart's manifests (see rolling-archive-hda-integration /
-pull-vs-push memory notes) -- the *rewritten* (Airflow-triggering) poller has been
-live-tested directly (real token fetch, idempotent trigger/skip against a real
-local Airflow instance -- see rolling-archive-worker's own test suite and README),
-but **not yet redeployed via this specific chart** to confirm the new
-`AIRFLOW_*` env vars render and resolve correctly end-to-end in-cluster. Do that
-before trusting this chart's poller-deployment.yaml as-is in a real environment.
+The poller itself (real token fetch, idempotent trigger/skip) is live-tested
+against a local Airflow instance directly -- see rolling-archive-worker's own
+test suite and README -- but **not yet redeployed via this specific chart** to
+confirm the `AIRFLOW_*` env vars render and resolve correctly end-to-end
+in-cluster. Do that before trusting `poller-deployment.yaml` as-is in a real
+environment.
 
 Also caught and fixed, still applicable: Helm/Go renders large "round" numbers
 piped through `| quote` in scientific notation (e.g. `1800000` rendering as the
