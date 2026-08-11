@@ -7,7 +7,7 @@ description: >-
   else best-effort) routed via CDSE subscription, not message content. This chart
   deploys only the pull poller -- the actual download/mirror/enrich pipeline runs as
   Airflow DAGs (rolling-archive-dags), triggered by the poller via the Airflow REST
-  API, deployed separately via k8s-infra's existing Airflow Application.
+  API, deployed separately via the target Airflow instance's own Application.
 type: application
 version: 0.2.0
 appVersion: "0.2.0"
