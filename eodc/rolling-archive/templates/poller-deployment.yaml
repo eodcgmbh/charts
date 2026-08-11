@@ -22,15 +22,11 @@ spec:
         app.kubernetes.io/component: poller
         rolling-archive/entry: {{ $entry.name }}
       {{- if $.Values.vault.enabled }}
-      # bank-vaults' vault-secrets-webhook (already cluster-wide at EODC, both
-      # k8s-infra and k8s-production/k8s-development) intercepts pod creation for
-      # any pod carrying these annotations, and resolves `vault:<mount>/data/
-      # <path>#<field>` placeholder values it finds in that pod's referenced
-      # Secrets (see templates/secrets-from-vault.yaml) into real values before
-      # the container starts -- confirmed live precedent:
-      # cluster-mgmt/charts/resource-controllers' own secret.yaml uses the exact
-      # same `vault:assembly/data/...#...` pattern for openstack-cloud-controller-
-      # manager's cloud.conf.
+      # bank-vaults' vault-secrets-webhook (cluster-wide at EODC) intercepts pod
+      # creation for any pod carrying these annotations, and resolves
+      # `vault:<mount>/data/<path>#<field>` placeholder values it finds in that
+      # pod's referenced Secrets (see templates/secrets-from-vault.yaml) into
+      # real values before the container starts.
       annotations:
         vault.security.banzaicloud.io/vault-addr: {{ $.Values.vault.addr | quote }}
         vault.security.banzaicloud.io/vault-role: {{ $.Values.vault.role | quote }}

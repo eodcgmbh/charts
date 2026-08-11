@@ -31,35 +31,28 @@ idempotent re-triggering).
   (`poller.airflow.baseUrl`), with `rolling-archive-priority`/`rolling-archive-normal`
   Airflow Pools already created -- neither is provisioned by this chart.
 
-## Secrets mechanism: bank-vaults' `vault-secrets-webhook` (confirmed, cluster-wide)
+## Secrets mechanism: bank-vaults' `vault-secrets-webhook` (cluster-wide)
 
-Real, live precedent found in `cluster-mgmt/charts/resource-controllers`
-(installs the OpenStack cloud-controller-manager's `cloud.conf` this exact way)
-and confirmed installed on `k8s-infra` too (`inf-vault-webhook`/
-`dev-vault-webhook` Applications): commit a plain Kubernetes `Secret` whose
-values are literal `vault:<mount>/data/<path>#<field>` strings (NOT real
-credentials), and annotate the consuming pod's template with
+Commit a plain Kubernetes `Secret` whose values are literal
+`vault:<mount>/data/<path>#<field>` strings (NOT real credentials), and
+annotate the consuming pod's template with
 `vault.security.banzaicloud.io/vault-addr`/`vault-role` -- the cluster's
 mutating admission webhook resolves the placeholder into a real value before
-the container starts. Application code never sees the difference; it just reads
-a normal environment variable.
+the container starts. Application code never sees the difference; it just
+reads a normal environment variable.
 
 When `vault.enabled: true`, this chart's `templates/secrets-from-vault.yaml`
 creates all 7 Secrets below itself (deduplicated by `existingSecret` name) with
 these placeholder values, and `templates/poller-deployment.yaml` adds the
 required annotations to the poller pod template. `vault.mount: access` is the
-KV-v2 mount dedicated to the `eodc/mission/access` GitLab subgroup Rolling
-Archive is being ported to
+KV-v2 mount for the `eodc/mission/access` GitLab subgroup
 (`https://vault.assembly.eodc.eu/ui/vault/secrets/access/list`);
 `vault.basePath: rolling-archive` groups everything under
-`access/rolling-archive/*`. **Still needed, and NOT something this chart or
-Helm can do**: someone with write access to that Vault mount running
-`vault kv put access/rolling-archive/<slug> <field>=<realvalue>` for each of the
-7 rows below, and confirming the real `vault.role` (the Vault Kubernetes-auth
-role that authorizes reading `access/data/rolling-archive/*` from
-`k8s-production` -- other real examples at EODC use a role matching the
-cluster/environment name, e.g. `"production"`, but that's precedent, not a
-confirmed value for this specific mount. Ask Assembly Mission.).
+`access/rolling-archive/*`. `vault.role` is `"development"` or `"production"`,
+matching the cluster this Application is deployed to. **Still needed, and NOT
+something this chart or Helm can do**: someone with write access to that Vault
+mount running `vault kv put access/rolling-archive/<slug> <field>=<realvalue>`
+for each of the 7 rows below.
 
 ## Secrets this chart needs (and shares with `rolling-archive-dags`)
 
@@ -113,16 +106,14 @@ not throughput scaling, at zero cost in custom leader-election logic. The only
 already absorbed by `airflow_trigger.ensure_dag_run()`'s own idempotency check
 (itself sitting on top of the download task's S3-existence-check idempotency).
 
-## Airflow authentication -- a real, live-confirmed gotcha
+## Airflow authentication
 
 Airflow's `simple` auth manager (the default for a fresh install) issues
-short-lived **JWT bearer tokens via `POST /auth/token`**, not plain HTTP Basic Auth
-on the API itself -- confirmed live against a local Airflow instance that Basic
-Auth returns `401 Not authenticated` on `/api/v2/...` directly. `poller.airflow.
-existingSecret`'s `AIRFLOW_USERNAME`/`AIRFLOW_PASSWORD` keys are used against
-`/auth/token` (see `rolling-archive-worker`'s `airflow_trigger.get_token()`), which
-the poller re-fetches fresh every poll cycle rather than caching across the loop --
-simpler than tracking token expiry, and cheap at this poll interval.
+short-lived **JWT bearer tokens via `POST /auth/token`**, not plain HTTP Basic
+Auth on the API itself. `poller.airflow.existingSecret`'s
+`AIRFLOW_USERNAME`/`AIRFLOW_PASSWORD` keys are used against `/auth/token` (see
+`rolling-archive-worker`'s `airflow_trigger.get_token()`), which the poller
+re-fetches fresh every poll cycle rather than caching across the loop.
 
 ## Multi-bucket layout: `s3.sharedBucket` is a fallback, not the only bucket
 
