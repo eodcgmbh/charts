@@ -1579,6 +1579,31 @@ entries:
     urls:
     - pygeoapi-2025.10.1-rc1.tgz
     version: 2025.10.1-rc1
+  rolling-archive:
+  - apiVersion: v2
+    appVersion: 0.2.0
+    created: "2026-08-12T08:44:41.905923698Z"
+    description: Mirrors Copernicus Data Space Ecosystem (CDSE) Sentinel products
+      into CEPH S3 with a configurable, short retention window. CEPH S3 is the sole
+      source of truth -- no metadata database. Two-tier priority (Sentinel-1 GRD+AUX
+      near-real-time, everything else best-effort) routed via CDSE subscription, not
+      message content. This chart deploys only the pull poller -- the actual download/mirror/enrich
+      pipeline runs as Airflow DAGs (rolling-archive-dags), triggered by the poller
+      via the Airflow REST API, deployed separately via the target Airflow instance's
+      own Application.
+    digest: 9edc2a74c86a77b8c0003665f4db8a18ac8933997e1f1ef99e4eefa88ed2c3e0
+    home: https://git.eodc.eu/eodc/mission/access/rolling-archive-worker
+    name: rolling-archive
+    sources:
+    - https://git.eodc.eu/eodc/mission/access/cdse-client
+    - https://git.eodc.eu/eodc/mission/access/rolling-archive-worker
+    - https://git.eodc.eu/eodc/mission/access/rolling-archive-enricher
+    - https://git.eodc.eu/eodc/mission/access/rolling-archive-scope-manager
+    - https://git.eodc.eu/eodc/mission/access/rolling-archive-dags
+    type: application
+    urls:
+    - rolling-archive-0.2.0.tgz
+    version: 0.2.0
   stac-browser:
   - apiVersion: v2
     appVersion: v3.1.0-rc.1
@@ -1707,4 +1732,4 @@ entries:
     urls:
     - zarr-browser-2026.5.1.tgz
     version: 2026.5.1
-generated: "2026-07-28T13:25:29.226552143Z"
+generated: "2026-08-12T08:44:41.906052265Z"
