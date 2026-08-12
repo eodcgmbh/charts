@@ -1,0 +1,137 @@
+# Default values for the Rolling Archive chart.
+
+nameOverride: ""
+fullnameOverride: ""
+
+imagePullSecrets: []
+# - name: regcred
+
+# registry.eodc.eu is GitLab's own built-in Container Registry at git.eodc.eu,
+# exposed under this custom hostname -- not a separate external registry.
+# repository is always <GitLab namespace>/<project path>.
+image:
+  registry: registry.eodc.eu
+  worker:
+    repository: eodc/mission/access/rolling-archive-worker
+    tag: ""              # defaults to .Chart.AppVersion when empty
+  pullPolicy: IfNotPresent
+
+# -- S3/CEPH is the sole source of truth for idempotency (no metadata DB). The
+# poller only reads it to look up each entry's subscription manifest
+# (rolling-archive-scope-manager writes _subscriptions/<entry>.json here) -- the
+# actual download/upload happens inside Airflow tasks, not this chart's own
+# workload.
+s3:
+  # Only used when vault.enabled is false (e.g. local-testing) -- when Vault-
+  # backed, the poller reads S3_HOST from the SAME Secret as S3_KEY/S3_SECRET
+  # instead (see templates/secrets-from-vault.yaml's "host" field), one real
+  # endpoint value rather than also duplicating it here.
+  host: https://objects.eodc.eu:443
+  # This is the FALLBACK bucket only -- high-volume/high-object-count collections
+  # get their own dedicated bucket instead (rolling_archive_worker/buckets.py's
+  # bucket_for(), derived from this value, e.g. "eodag-s2-msi-l2a"), to keep
+  # object count per bucket manageable per EODC IT's guidance. Not a chart value --
+  # always derived by that one function, so there's exactly one place deciding
+  # bucket assignment.
+  sharedBucket: eodag-others
+  # Secret with keys S3_KEY/S3_SECRET. If vault.enabled is true, this chart
+  # creates it itself (templates/secrets-from-vault.yaml) with placeholder
+  # values the cluster's vault-secrets-webhook resolves -- see the chart
+  # README's Secrets section. If vault.enabled is false (e.g. local-testing),
+  # something else must create this Secret with real plaintext values.
+  existingSecret: rolling-archive-s3-credentials
+
+# -- EODC runs bank-vaults' vault-secrets-webhook cluster-wide, which resolves
+# `vault:<mount>/data/<path>#<field>` placeholder values -- found in a
+# committed Secret this chart creates itself (templates/secrets-from-vault.yaml)
+# AND read by a pod carrying the vault.security.banzaicloud.io/* annotations
+# below -- into real values at pod admission time. `access` is the KV mount for
+# the `eodc/mission/access` GitLab subgroup Rolling Archive lives in.
+vault:
+  # false by default (e.g. local-testing/kind, which has no real Vault/webhook
+  # at all) -- set true for a real k8s-production/k8s-development deployment.
+  enabled: false
+  addr: https://vault.assembly.eodc.eu
+  # The real Vault role is "development" or "production", matching the cluster
+  # this Application is deployed to -- no chart-level default makes sense here,
+  # each Application manifest must set this explicitly.
+  role: ""
+  mount: access
+  basePath: rolling-archive
+
+# -- The actual download/mirror/enrich pipeline runs as Airflow DAGs
+# (rolling-archive-dags, deployed via the real Airflow instance's own
+# dagBundleConfigList -- NOT by this chart, no Dockerfile/chart/ArgoCD
+# Application of its own). This chart's only workload is the poller: it
+# watches CDSE pull subscriptions and triggers a DagRun per batch via the
+# Airflow REST API.
+poller:
+  # A lightweight, mostly-idle process (sleep loop + occasional HTTP calls, no
+  # download/upload work itself) -- deliberately smaller than the download/
+  # mirror_assets Airflow tasks' own 250m/256Mi request, 1/1Gi limit. No
+  # namespace-level LimitRange exists in k8s-development/k8s-production to
+  # apply a default otherwise, so this chart sets one explicitly rather than
+  # leaving the poller unbounded.
+  resources:
+    requests:
+      cpu: 25m
+      memory: 64Mi
+    limits:
+      cpu: 200m
+      memory: 128Mi
+  # Failover, not throughput scaling -- live-tested safe: concurrent readers of one
+  # CDSE pull subscription see the same backlog (one shared ack cursor) and don't
+  # corrupt each other, so N replicas just means "still polling if one pod is
+  # unhealthy", not N-way parallelism. The only cost when both are healthy is
+  # occasional duplicate DagRun triggers, already absorbed by
+  # airflow_trigger.ensure_dag_run()'s own idempotency check.
+  replicas: 2
+  # How often to re-poll once a subscription is known.
+  pollIntervalSeconds: 15
+  # How often to retry while no manifest exists yet for an entry (scope-manager
+  # hasn't reconciled it, or it's currently paused/deactivated) -- distinct from
+  # pollIntervalSeconds above.
+  subscriptionRetrySeconds: 30
+  # -- Batch multiple pending CDSE notifications into one Airflow DagRun
+  # (count-or-time, whichever fires first) instead of one DagRun per
+  # notification, to amortize per-product pod-launch overhead. batchMaxSize=1
+  # (default) reproduces today's exact per-notification trigger behavior --
+  # batching is opt-in. batchMaxSeconds is irrelevant at size 1. See
+  # rolling-archive-worker's pull_poller_worker.py for the accumulate-then-flush
+  # logic and its accepted head-of-line-blocking trade-off at larger sizes.
+  batchMaxSize: 1
+  batchMaxSeconds: 0
+  airflow:
+    # Required, no default: this Airflow instance's own API base URL, e.g.
+    # https://airflow-v3.dev.services.eodc.eu -- not something to guess at.
+    baseUrl: ""
+    # Secret with keys AIRFLOW_USERNAME/AIRFLOW_PASSWORD. Airflow's `simple` auth
+    # manager issues short-lived JWT bearer tokens from these via /auth/token,
+    # not plain HTTP Basic Auth. Never created by this chart -- via Vault.
+    existingSecret: rolling-archive-airflow-credentials
+    # Must match rolling-archive-dags' actual DAG ids.
+    dagIdPriority: rolling_archive_download_priority
+    dagIdNormal: rolling_archive_download_normal
+  # -- One Deployment per PULL-mode rolling-archive-scope-manager scope.yaml entry,
+  # NOT per tier/account -- scope-manager explicitly allows one account to be
+  # shared across both tiers, so a poller keyed on account alone could trigger the
+  # wrong tier's DAG. `name` must exactly match that entry's `name` in scope.yaml --
+  # it's the manifest object key scope-manager writes after reconciling
+  # (_subscriptions/<name>.json), which is how this poller finds its subscription
+  # Id and tier without CDSE subscriptions needing a name of their own.
+  # `existingSecret` needs `username`/`password` keys (+ optional `totp_secret`
+  # for 2FA-enabled accounts) for that entry's `account` in scope.yaml -- lowercase
+  # keys deliberately, matching rolling-archive-dags/_common.py's own convention
+  # for the SAME account Secrets on the Airflow-task side, since one real CDSE
+  # account's Secret is shared between both consumers (poller here, Airflow
+  # KubernetesPodOperator tasks there) -- see the chart README's Secrets section.
+  #
+  # No default -- every deployment sets its own list explicitly. Must be kept
+  # in sync with rolling-archive-scope-manager/scope.yaml's `subscriptions` by
+  # hand (nothing derives one from the other automatically). Account-to-secret
+  # naming matches the cdse-account{N}-credentials convention -- never created
+  # by this chart. Example shape:
+  #   entries:
+  #     - name: dev-smoke-test
+  #       existingSecret: cdse-account-dev-credentials
+  entries: []

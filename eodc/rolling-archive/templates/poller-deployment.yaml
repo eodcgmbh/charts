@@ -1,0 +1,141 @@
+{{- range $entry := .Values.poller.entries }}
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "rolling-archive.pollerDeploymentName" (dict "context" $ "entry" $entry) }}
+  namespace: {{ $.Release.Namespace }}
+  labels:
+    {{- include "rolling-archive.labels" $ | nindent 4 }}
+    app.kubernetes.io/component: poller
+spec:
+  replicas: {{ $.Values.poller.replicas }}
+  selector:
+    matchLabels:
+      {{- include "rolling-archive.selectorLabels" $ | nindent 6 }}
+      app.kubernetes.io/component: poller
+      rolling-archive/entry: {{ $entry.name }}
+  template:
+    metadata:
+      labels:
+        {{- include "rolling-archive.selectorLabels" $ | nindent 8 }}
+        app.kubernetes.io/component: poller
+        rolling-archive/entry: {{ $entry.name }}
+      {{- if $.Values.vault.enabled }}
+      # bank-vaults' vault-secrets-webhook (cluster-wide at EODC) intercepts pod
+      # creation for any pod carrying these annotations, and resolves
+      # `vault:<mount>/data/<path>#<field>` placeholder values it finds in that
+      # pod's referenced Secrets (see templates/secrets-from-vault.yaml) into
+      # real values before the container starts.
+      annotations:
+        vault.security.banzaicloud.io/vault-addr: {{ $.Values.vault.addr | quote }}
+        vault.security.banzaicloud.io/vault-role: {{ $.Values.vault.role | quote }}
+      {{- end }}
+    spec:
+      {{- with $.Values.imagePullSecrets }}
+      imagePullSecrets:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      containers:
+        - name: poller
+          # Same image as the Airflow download-task entrypoints -- a different
+          # entrypoint (pyproject.toml's [project.scripts]), not a separate image.
+          image: "{{ $.Values.image.registry }}/{{ $.Values.image.worker.repository }}:{{ $.Values.image.worker.tag | default $.Chart.AppVersion }}"
+          imagePullPolicy: {{ $.Values.image.pullPolicy }}
+          command: ["rolling-archive-pull-poller"]
+          env:
+            # When Vault-backed, AIRFLOW_BASE_URL comes from the same Secret as
+            # AIRFLOW_USERNAME/AIRFLOW_PASSWORD -- one real value, one source of
+            # truth, and easy to rotate if this URL changes (e.g. the platform
+            # team's OpenStack/cluster migration). poller.airflow.baseUrl stays
+            # a plain fallback for local-testing (vault.enabled: false).
+            {{- if $.Values.vault.enabled }}
+            - name: AIRFLOW_BASE_URL
+              valueFrom:
+                secretKeyRef:
+                  name: {{ $.Values.poller.airflow.existingSecret }}
+                  key: AIRFLOW_BASE_URL
+            {{- else }}
+            - name: AIRFLOW_BASE_URL
+              value: {{ $.Values.poller.airflow.baseUrl | quote }}
+            {{- end }}
+            - name: AIRFLOW_USERNAME
+              valueFrom:
+                secretKeyRef:
+                  name: {{ $.Values.poller.airflow.existingSecret }}
+                  key: AIRFLOW_USERNAME
+            - name: AIRFLOW_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: {{ $.Values.poller.airflow.existingSecret }}
+                  key: AIRFLOW_PASSWORD
+            - name: AIRFLOW_DAG_ID_PRIORITY
+              value: {{ $.Values.poller.airflow.dagIdPriority | quote }}
+            - name: AIRFLOW_DAG_ID_NORMAL
+              value: {{ $.Values.poller.airflow.dagIdNormal | quote }}
+            - name: ENTRY_NAME
+              value: {{ $entry.name | quote }}
+            - name: POLL_INTERVAL_SECONDS
+              value: {{ $.Values.poller.pollIntervalSeconds | int | quote }}
+            - name: SUBSCRIPTION_RETRY_SECONDS
+              value: {{ $.Values.poller.subscriptionRetrySeconds | int | quote }}
+            - name: BATCH_MAX_SIZE
+              value: {{ $.Values.poller.batchMaxSize | int | quote }}
+            - name: BATCH_MAX_SECONDS
+              value: {{ $.Values.poller.batchMaxSeconds | quote }}
+            # When Vault-backed, S3_HOST comes from the same Secret as S3_KEY/
+            # S3_SECRET (one real endpoint value, one source of truth, rather
+            # than also duplicating it into values.yaml) -- s3.host stays a
+            # plain fallback for local-testing (vault.enabled: false), which
+            # has no Vault/webhook to resolve a Secret-sourced value at all.
+            {{- if $.Values.vault.enabled }}
+            - name: S3_HOST
+              valueFrom:
+                secretKeyRef:
+                  name: {{ $.Values.s3.existingSecret }}
+                  key: S3_HOST
+            {{- else }}
+            - name: S3_HOST
+              value: {{ $.Values.s3.host | quote }}
+            {{- end }}
+            - name: S3_SHARED_BUCKET
+              value: {{ $.Values.s3.sharedBucket | quote }}
+            - name: S3_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: {{ $.Values.s3.existingSecret }}
+                  key: S3_KEY
+            - name: S3_SECRET
+              valueFrom:
+                secretKeyRef:
+                  name: {{ $.Values.s3.existingSecret }}
+                  key: S3_SECRET
+            - name: CDSE_USERNAME
+              valueFrom:
+                secretKeyRef:
+                  name: {{ $entry.existingSecret }}
+                  key: username
+            - name: CDSE_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: {{ $entry.existingSecret }}
+                  key: password
+            # Optional: only present for CDSE accounts with TOTP/2FA enabled --
+            # `optional: true` so accounts without a totp_secret key don't crash
+            # pod startup. Matches rolling-archive-dags/_common.py's own
+            # username/password/totp_secret key convention for the SAME account
+            # Secrets (shared 1:1 between poller and Airflow download-task pods --
+            # see the chart README's Secrets section), and pull_poller_config.py
+            # already reads CDSE_TOTP_SECRET (optional, defaults to None) -- this
+            # was simply never wired through by this template until now.
+            - name: CDSE_TOTP_SECRET
+              valueFrom:
+                secretKeyRef:
+                  name: {{ $entry.existingSecret }}
+                  key: totp_secret
+                  optional: true
+          {{- with $.Values.poller.resources }}
+          resources:
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
+{{- end }}

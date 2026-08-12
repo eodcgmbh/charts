@@ -1,0 +1,20 @@
+Rolling Archive ({{ .Chart.Name }} {{ .Chart.AppVersion }}) has been deployed.
+
+This chart's only workload is the pull poller -- one Deployment per
+rolling-archive-scope-manager scope.yaml entry, no Ingress/public endpoint needed
+at all. It watches CDSE pull subscriptions and triggers a DagRun in
+{{ .Values.poller.airflow.baseUrl }} per batch of notifications.
+
+Poller Deployments:
+{{- range .Values.poller.entries }}
+    - {{ include "rolling-archive.pollerDeploymentName" (dict "context" $ "entry" .) }}
+{{- end }}
+
+The actual download/mirror/enrich pipeline runs as Airflow DAGs
+({{ .Values.poller.airflow.dagIdPriority }} / {{ .Values.poller.airflow.dagIdNormal }}
+in rolling-archive-dags) -- deployed via the real Airflow instance's own
+dagBundleConfigList, not by this chart.
+
+None of this chart's Secrets (S3, Airflow, CDSE accounts) are created by the chart
+itself -- populate {{ .Values.s3.existingSecret }}, {{ .Values.poller.airflow.existingSecret }},
+and each entry's existingSecret via Vault before this will actually run.
