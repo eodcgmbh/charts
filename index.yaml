@@ -1582,6 +1582,30 @@ entries:
   rolling-archive:
   - apiVersion: v2
     appVersion: 0.2.0
+    created: "2026-08-18T14:02:19.021762643Z"
+    description: Mirrors Copernicus Data Space Ecosystem (CDSE) Sentinel products
+      into CEPH S3 with a configurable, short retention window. CEPH S3 is the sole
+      source of truth -- no metadata database. Two-tier priority (Sentinel-1 GRD+AUX
+      near-real-time, everything else best-effort) routed via CDSE subscription, not
+      message content. This chart deploys only the pull poller -- the actual download/mirror/enrich
+      pipeline runs as Airflow DAGs (rolling-archive-dags), triggered by the poller
+      via the Airflow REST API, deployed separately via the target Airflow instance's
+      own Application.
+    digest: 61aecf60477afbcaee4387d9a10da6935c511575f6f280000041b858ffec136a
+    home: https://git.eodc.eu/eodc/mission/access/rolling-archive-worker
+    name: rolling-archive
+    sources:
+    - https://git.eodc.eu/eodc/mission/access/cdse-client
+    - https://git.eodc.eu/eodc/mission/access/rolling-archive-worker
+    - https://git.eodc.eu/eodc/mission/access/rolling-archive-enricher
+    - https://git.eodc.eu/eodc/mission/access/rolling-archive-scope-manager
+    - https://git.eodc.eu/eodc/mission/access/rolling-archive-dags
+    type: application
+    urls:
+    - rolling-archive-0.2.1.tgz
+    version: 0.2.1
+  - apiVersion: v2
+    appVersion: 0.2.0
     created: "2026-08-12T08:44:41.905923698Z"
     description: Mirrors Copernicus Data Space Ecosystem (CDSE) Sentinel products
       into CEPH S3 with a configurable, short retention window. CEPH S3 is the sole
@@ -1732,4 +1756,4 @@ entries:
     urls:
     - zarr-browser-2026.5.1.tgz
     version: 2026.5.1
-generated: "2026-08-12T08:44:41.906052265Z"
+generated: "2026-08-18T14:02:19.022038159Z"
