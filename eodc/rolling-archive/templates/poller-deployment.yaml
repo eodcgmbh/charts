@@ -30,6 +30,8 @@ spec:
       annotations:
         vault.security.banzaicloud.io/vault-addr: {{ $.Values.vault.addr | quote }}
         vault.security.banzaicloud.io/vault-role: {{ $.Values.vault.role | quote }}
+        vault.security.banzaicloud.io/vault-path: {{ $.Values.vault.path | quote }}
+        vault.security.banzaicloud.io/vault-skip-verify: {{ $.Values.vault.skipVerify | quote }}
       {{- end }}
     spec:
       {{- with $.Values.imagePullSecrets }}

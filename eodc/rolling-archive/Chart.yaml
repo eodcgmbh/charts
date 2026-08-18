@@ -9,7 +9,7 @@ description: >-
   Airflow DAGs (rolling-archive-dags), triggered by the poller via the Airflow REST
   API, deployed separately via the target Airflow instance's own Application.
 type: application
-version: 0.2.0
+version: 0.2.1
 appVersion: "0.2.0"
 home: https://git.eodc.eu/eodc/mission/access/rolling-archive-worker
 sources:
