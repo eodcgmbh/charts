@@ -134,6 +134,10 @@ spec:
             {{- end }}
             - name: STAC_API_URL
               value: "{{ .Values.global.env.stacCatalogueUrl }}"
+            {{- if .Values.global.env.stacCollectionsWhitelist }}
+            - name: STAC_COLLECTIONS_WHITELIST
+              value: {{ join "," .Values.global.env.stacCollectionsWhitelist | quote }}
+            {{- end }}
             - name: ARGO_WORKFLOWS_SERVER
               value: {{ if .Values.argoworkflows.enabled }}"http://openeo-argo-workflows-server.{{ .Release.Namespace }}.svc.cluster.local:2746"{{ else }}"{{ .Values.argoworkflows.server }}"{{ end }}
             - name: ARGO_WORKFLOWS_NAMESPACE

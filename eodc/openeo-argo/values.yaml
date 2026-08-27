@@ -15,6 +15,7 @@ global:
     oidcClientId: "openeo-platform-default-client"
     oidcRolesClaim: ""
     stacCatalogueUrl: "https://stac.eodc.eu/api/v1"
+    stacCollectionsWhitelist: []
     workspaceRoot: "/user_workspace/jobs"
     workspaceMount: &workspaceMount "/user_workspace"
     executorImage: "ghcr.io/eodcgmbh/openeo-argoworkflows:executor-2026.5.6"
