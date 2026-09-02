@@ -38,8 +38,8 @@ microk8s helm upgrade --install openeo -n test -f values.yaml .
 | global.env.oidcPolicies       | Policies for OpenID Connect authorization             |    ""  |
 | global.env.oidcProviderTitle  | Display title of the OIDC provider                    |  "EGI Check-in"  |
 | global.env.oidcClientId       | Client ID registered with the OIDC provider           |  "openeo-platform-default-client"  |
-| global.env.stacCatalogueUrl   | URL for a single STAC catalogue, used when stacCatalogueUrls is empty  |   "https://stac.eodc.eu/api/v1"    |
-| global.env.stacCatalogueUrls  | URLs of the STAC catalogues to proxy. Their collections are combined and then filtered by stacCollectionsWhitelist. Takes precedence over stacCatalogueUrl  |   []    |
+| global.env.stacCatalogueUrl   | URL for a single STAC catalogue. Always set, and required by the API even when stacCatalogueUrls is used  |   "https://stac.eodc.eu/api/v1"    |
+| global.env.stacCatalogueUrls  | URLs of the STAC catalogues to proxy. Their collections are combined, deduplicated by id keeping the first match, and then filtered by stacCollectionsWhitelist. Takes precedence over stacCatalogueUrl  |   []    |
 | global.env.workspaceRoot      | Root directory for user workspaces                    |   "/user_workspaces/jobs"    |
 | global.env.workspaceMount      | The mount path for the volume where the user workspaces are stored  |   "/user_workspaces"    |
 | global.env.executorImage      | Image for the executor                                |   "ghcr.io/eodcgmbh/openeo-argoworkflows:executor-2026.3.4"    |

@@ -132,12 +132,14 @@ spec:
             - name: OIDC_ROLES_CLAIM
               value: {{ .Values.global.env.oidcRolesClaim | quote }}
             {{- end }}
+            {{- /* Always set STAC_API_URL: openeo-fastapi's OpenEOCore discards the
+                   injected settings for a bare AppSettings(), which has no
+                   STAC_API_URLS field and treats STAC_API_URL as required. */}}
+            - name: STAC_API_URL
+              value: "{{ .Values.global.env.stacCatalogueUrl }}"
             {{- if .Values.global.env.stacCatalogueUrls }}
             - name: STAC_API_URLS
               value: {{ join "," .Values.global.env.stacCatalogueUrls | quote }}
-            {{- else }}
-            - name: STAC_API_URL
-              value: "{{ .Values.global.env.stacCatalogueUrl }}"
             {{- end }}
             {{- if .Values.global.env.stacCollectionsWhitelist }}
             - name: STAC_COLLECTIONS_WHITELIST
@@ -243,12 +245,14 @@ spec:
             - name: OIDC_ROLES_CLAIM
               value: {{ .Values.global.env.oidcRolesClaim | quote }}
             {{- end }}
+            {{- /* Always set STAC_API_URL: openeo-fastapi's OpenEOCore discards the
+                   injected settings for a bare AppSettings(), which has no
+                   STAC_API_URLS field and treats STAC_API_URL as required. */}}
+            - name: STAC_API_URL
+              value: "{{ .Values.global.env.stacCatalogueUrl }}"
             {{- if .Values.global.env.stacCatalogueUrls }}
             - name: STAC_API_URLS
               value: {{ join "," .Values.global.env.stacCatalogueUrls | quote }}
-            {{- else }}
-            - name: STAC_API_URL
-              value: "{{ .Values.global.env.stacCatalogueUrl }}"
             {{- end }}
             {{- if .Values.global.env.stacApiSecret.name }}
             - name: STAC_API_USERNAME
