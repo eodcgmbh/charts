@@ -132,8 +132,13 @@ spec:
             - name: OIDC_ROLES_CLAIM
               value: {{ .Values.global.env.oidcRolesClaim | quote }}
             {{- end }}
+            {{- if .Values.global.env.stacCatalogueUrls }}
+            - name: STAC_API_URLS
+              value: {{ join "," .Values.global.env.stacCatalogueUrls | quote }}
+            {{- else }}
             - name: STAC_API_URL
               value: "{{ .Values.global.env.stacCatalogueUrl }}"
+            {{- end }}
             {{- if .Values.global.env.stacCollectionsWhitelist }}
             - name: STAC_COLLECTIONS_WHITELIST
               value: {{ join "," .Values.global.env.stacCollectionsWhitelist | quote }}
@@ -238,8 +243,13 @@ spec:
             - name: OIDC_ROLES_CLAIM
               value: {{ .Values.global.env.oidcRolesClaim | quote }}
             {{- end }}
+            {{- if .Values.global.env.stacCatalogueUrls }}
+            - name: STAC_API_URLS
+              value: {{ join "," .Values.global.env.stacCatalogueUrls | quote }}
+            {{- else }}
             - name: STAC_API_URL
               value: "{{ .Values.global.env.stacCatalogueUrl }}"
+            {{- end }}
             {{- if .Values.global.env.stacApiSecret.name }}
             - name: STAC_API_USERNAME
               valueFrom:

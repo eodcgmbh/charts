@@ -15,6 +15,7 @@ global:
     oidcClientId: "openeo-platform-default-client"
     oidcRolesClaim: ""
     stacCatalogueUrl: "https://stac.eodc.eu/api/v1"
+    stacCatalogueUrls: []
     stacCollectionsWhitelist: []
     workspaceRoot: "/user_workspace/jobs"
     workspaceMount: &workspaceMount "/user_workspace"
