@@ -7,6 +7,14 @@ binderhub-service:
       use_registry: true
       cors_allow_origin: '*'
       base_url: /services/binder
+  extraConfig:
+    # extraConfig runs in sorted key order, so this must sort after
+    # binderhub-service-01-build-pods-docker-config, which pins push_secret to
+    # the Secret the chart renders from plaintext buildPodsRegistryCredentials.
+    binderhub-service-01b-push-secret: |
+      _push_secret = get_chart_config("config.KubernetesBuildExecutor.push_secret")
+      if _push_secret:
+          c.KubernetesBuildExecutor.push_secret = _push_secret
 jupyterhub:
   hub:
     networkPolicy:
