@@ -145,6 +145,10 @@ spec:
             - name: STAC_COLLECTIONS_WHITELIST
               value: {{ join "," .Values.global.env.stacCollectionsWhitelist | quote }}
             {{- end }}
+            {{- if .Values.global.env.processWhitelist }}
+            - name: OPENEO_PROCESS_WHITELIST
+              value: {{ join "," .Values.global.env.processWhitelist | quote }}
+            {{- end }}
             - name: ARGO_WORKFLOWS_SERVER
               value: {{ if .Values.argoworkflows.enabled }}"http://openeo-argo-workflows-server.{{ .Release.Namespace }}.svc.cluster.local:2746"{{ else }}"{{ .Values.argoworkflows.server }}"{{ end }}
             - name: ARGO_WORKFLOWS_NAMESPACE
@@ -253,6 +257,12 @@ spec:
             {{- if .Values.global.env.stacCatalogueUrls }}
             - name: STAC_API_URLS
               value: {{ join "," .Values.global.env.stacCatalogueUrls | quote }}
+            {{- end }}
+            {{- /* The queue worker validates graphs and forwards this to the
+                   executor pod, so it needs the whitelist too. */}}
+            {{- if .Values.global.env.processWhitelist }}
+            - name: OPENEO_PROCESS_WHITELIST
+              value: {{ join "," .Values.global.env.processWhitelist | quote }}
             {{- end }}
             {{- if .Values.global.env.stacApiSecret.name }}
             - name: STAC_API_USERNAME
