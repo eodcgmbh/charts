@@ -44,7 +44,7 @@ microk8s helm upgrade --install openeo -n test -f values.yaml .
 | global.env.workspaceMount      | The mount path for the volume where the user workspaces are stored  |   "/user_workspaces"    |
 | global.env.executorImage      | Image for the executor                                |   "ghcr.io/eodcgmbh/openeo-argoworkflows:executor-2026.3.4"    |
 | global.env.daskWorkerCores      | Cores available to the dask worker                               |   "4"    |
-| global.env.daskWorkerMemory      | RAM available to the dask worker (in Gbs)                              |   "8"    |
+| global.env.daskWorkerMemoryGiB      | RAM available to the dask worker, in GiB (2**30 bytes)                              |   "8"    |
 | global.env.daskWorkerLimit      | Maximum number of workers available per job.                              |   "6"    |
 | global.env.daskClusterTimeout      | How long an idle cluster can be left unused.                              |   "3600"    |
 | global.env.awsDefaultRegion      | AWS region for the Icechunk store, forwarded to the executor.                              |   "us-east-1"    |

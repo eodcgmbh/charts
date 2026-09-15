@@ -314,8 +314,8 @@ spec:
               value: "http://traefik-openeo-dask-gateway.{{ .Release.Namespace }}.svc.cluster.local:80"
             - name: DASK_WORKER_CORES
               value: "{{ .Values.global.env.daskWorkerCores }}"
-            - name: DASK_WORKER_MEMORY
-              value: "{{ .Values.global.env.daskWorkerMemory }}"
+            - name: DASK_WORKER_MEMORY_GIB
+              value: "{{ .Values.global.env.daskWorkerMemoryGiB }}"
             - name: DASK_WORKER_LIMIT
               value: "{{ .Values.global.env.daskWorkerLimit }}"
             - name: DASK_CLUSTER_IDLE_TIMEOUT

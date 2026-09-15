@@ -23,7 +23,7 @@ global:
     executorImage: "ghcr.io/eodcgmbh/openeo-argoworkflows:executor-2026.5.6"
     executorImagePullPolicy: "Always"
     daskWorkerCores: "4"
-    daskWorkerMemory: "8"
+    daskWorkerMemoryGiB: "8"
     daskWorkerLimit: "6"
     daskClusterTimeout: "3600"
     daskProfiles: ""
@@ -265,7 +265,7 @@ dask-gateway:
         def option_handler(options):
           return {
               "worker_cores": options.WORKER_CORES,
-              "worker_memory": "%fG" % options.WORKER_MEMORY,
+              "worker_memory": int(options.WORKER_MEMORY_GIB * 2**30),
               "scheduler_extra_pod_labels": {'OPENEO_USER_ID': options.OPENEO_USER_ID, 'OPENEO_JOB_ID': options.OPENEO_JOB_ID },
               "worker_extra_pod_labels": {'OPENEO_USER_ID': options.OPENEO_USER_ID, 'OPENEO_JOB_ID': options.OPENEO_JOB_ID },
               "idle_timeout": options.CLUSTER_IDLE_TIMEOUT,
@@ -274,7 +274,7 @@ dask-gateway:
 
         c.Backend.cluster_options = Options(
             Integer("WORKER_CORES", 4, min=1, max=12, label="Worker Cores"),
-            Float("WORKER_MEMORY", 12, min=1, max=24, label="Worker Memory (GiB)"),
+            Float("WORKER_MEMORY_GIB", 12, min=1, max=48, label="Worker memory (GiB)"),
             String("OPENEO_USER_ID", "Unassigned", label="User identifier"),
             String("OPENEO_JOB_ID", "Unassigned", label="Job identifier"),
             Float("CLUSTER_IDLE_TIMEOUT", 3600, label="Idle Timeout"),
