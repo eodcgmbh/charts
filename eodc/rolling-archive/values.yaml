@@ -111,6 +111,11 @@ poller:
     # manager issues short-lived JWT bearer tokens from these via /auth/token,
     # not plain HTTP Basic Auth. Never created by this chart -- via Vault.
     existingSecret: rolling-archive-airflow-credentials
+    # Required when vault.enabled -- the Vault slug for this environment's
+    # airflow entry (e.g. "airflow-development"/"airflow-production"). Dev and
+    # prod are genuinely different Airflow instances and must not share one
+    # Vault entry, unlike s3/CDSE-account secrets below.
+    vaultSecretSlug: ""
     # Must match rolling-archive-dags' actual DAG ids.
     dagIdPriority: rolling_archive_download_priority
     dagIdNormal: rolling_archive_download_normal
