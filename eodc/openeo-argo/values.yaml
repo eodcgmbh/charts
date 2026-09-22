@@ -26,6 +26,7 @@ global:
     daskWorkerMemoryGiB: "8"
     daskWorkerLimit: "6"
     daskClusterTimeout: "3600"
+    netcdfLocalWriteBytes: ""
     daskProfiles: ""
     daskRoleProfileMapping: ""
     logLevel: "INFO"

@@ -47,6 +47,7 @@ microk8s helm upgrade --install openeo -n test -f values.yaml .
 | global.env.daskWorkerMemoryGiB      | RAM available to the dask worker, in GiB (2**30 bytes)                              |   "8"    |
 | global.env.daskWorkerLimit      | Maximum number of workers available per job.                              |   "6"    |
 | global.env.daskClusterTimeout      | How long an idle cluster can be left unused.                              |   "3600"    |
+| global.env.netcdfLocalWriteBytes      | Output size (bytes) at or above which the executor serialises the netCDF write instead of using the dask cluster, forwarded to the executor. Empty leaves it disabled. |   ""    |
 | global.env.awsDefaultRegion      | AWS region for the Icechunk store, forwarded to the executor.                              |   "us-east-1"    |
 | global.env.awsEndpointUrl      | AWS S3 endpoint URL for the Icechunk store, forwarded to the executor.                              |   ""    |
 | global.env.eodagDedlPriority      | EODAG DEDL provider priority, forwarded to the executor.                              |   "10"    |
