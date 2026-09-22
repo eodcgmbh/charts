@@ -737,6 +737,31 @@ entries:
   openeo-argo:
   - apiVersion: v2
     appVersion: 1.16.0
+    created: "2026-09-22T14:26:53.843290548Z"
+    dependencies:
+    - name: redis
+      repository: https://charts.bitnami.com/bitnami
+      version: 19.5.2
+    - condition: postgresql.enabled
+      name: postgresql
+      repository: https://charts.bitnami.com/bitnami
+      version: 15.5.1
+    - condition: argoworkflows.enabled
+      name: argo-workflows
+      repository: https://argoproj.github.io/argo-helm
+      version: 0.32.0
+    - name: dask-gateway
+      repository: https://helm.dask.org
+      version: 2024.1.0
+    description: A Helm chart for an OpenEO Argo Workflow implementation
+    digest: 9a09dafdb1f3a9b5ddc72ced25f03297442d5ebcb46266df69789baf83c7bdbd
+    name: openeo-argo
+    type: application
+    urls:
+    - openeo-argo-2026.9.5.tgz
+    version: 2026.9.5
+  - apiVersion: v2
+    appVersion: 1.16.0
     created: "2026-09-15T10:02:44.394599569Z"
     dependencies:
     - name: redis
@@ -1512,31 +1537,6 @@ entries:
     version: 2026.3.1-rc3
   - apiVersion: v2
     appVersion: 1.16.0
-    created: "2026-03-11T10:11:01.320521066Z"
-    dependencies:
-    - name: redis
-      repository: https://charts.bitnami.com/bitnami
-      version: 19.5.2
-    - condition: postgresql.enabled
-      name: postgresql
-      repository: https://charts.bitnami.com/bitnami
-      version: 15.5.1
-    - condition: argoworkflows.enabled
-      name: argo-workflows
-      repository: https://argoproj.github.io/argo-helm
-      version: 0.32.0
-    - name: dask-gateway
-      repository: https://helm.dask.org
-      version: 2024.1.0
-    description: A Helm chart for an OpenEO Argo Workflow implementation
-    digest: 1b69149d783a72ce032ee567d169b8d83685fb5bde4a1cfcbe15d33fc89afca2
-    name: openeo-argo
-    type: application
-    urls:
-    - openeo-argo-2026.3.1-rc2.tgz
-    version: 2026.3.1-rc2
-  - apiVersion: v2
-    appVersion: 1.16.0
     created: "2026-03-11T09:12:15.463496154Z"
     dependencies:
     - name: redis
@@ -1555,6 +1555,31 @@ entries:
       version: 2024.1.0
     description: A Helm chart for an OpenEO Argo Workflow implementation
     digest: d413a6ca2280f6f3f7e6aefce4a0569ab8b6ebefb1cbe68f113a36a12aed3ea1
+    name: openeo-argo
+    type: application
+    urls:
+    - openeo-argo-2026.3.1-rc2.tgz
+    version: 2026.3.1-rc2
+  - apiVersion: v2
+    appVersion: 1.16.0
+    created: "2026-03-11T10:11:01.320521066Z"
+    dependencies:
+    - name: redis
+      repository: https://charts.bitnami.com/bitnami
+      version: 19.5.2
+    - condition: postgresql.enabled
+      name: postgresql
+      repository: https://charts.bitnami.com/bitnami
+      version: 15.5.1
+    - condition: argoworkflows.enabled
+      name: argo-workflows
+      repository: https://argoproj.github.io/argo-helm
+      version: 0.32.0
+    - name: dask-gateway
+      repository: https://helm.dask.org
+      version: 2024.1.0
+    description: A Helm chart for an OpenEO Argo Workflow implementation
+    digest: 1b69149d783a72ce032ee567d169b8d83685fb5bde4a1cfcbe15d33fc89afca2
     name: openeo-argo
     type: application
     urls:
@@ -1922,4 +1947,4 @@ entries:
     urls:
     - zarr-browser-2026.5.1.tgz
     version: 2026.5.1
-generated: "2026-09-17T16:15:51.390229565Z"
+generated: "2026-09-22T14:26:53.843666569Z"
