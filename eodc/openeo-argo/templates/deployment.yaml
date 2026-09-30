@@ -362,6 +362,10 @@ spec:
                   key: postgres-password
             - name: LOG_LEVEL
               value: "{{ .Values.global.env.logLevel }}"
+            {{- if .Values.global.env.jobRetentionDays }}
+            - name: OPENEO_JOB_RETENTION_DAYS
+              value: "{{ .Values.global.env.jobRetentionDays }}"
+            {{- end }}
           ports:
             - name: http
               containerPort: {{ .Values.service.port }}
@@ -374,10 +378,13 @@ spec:
             initialDelaySeconds: 90
           resources:
             {{- toYaml .Values.resources | nindent 12 }}
-          {{- with .Values.volumeMounts }}
           volumeMounts:
+            # The job retention purge deletes job results from the workspace.
+            - name: workspace-mount
+              mountPath: "{{ .Values.global.env.workspaceMount }}"
+            {{- with .Values.volumeMounts }}
             {{- toYaml . | nindent 12 }}
-          {{- end }}
+            {{- end }}
       {{- with .Values.volumes }}
       volumes:
         {{- toYaml . | nindent 8 }}

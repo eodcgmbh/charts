@@ -27,6 +27,7 @@ global:
     daskWorkerLimit: "6"
     daskClusterTimeout: "3600"
     netcdfLocalWriteBytes: ""
+    jobRetentionDays: ""
     daskProfiles: ""
     daskRoleProfileMapping: ""
     logLevel: "INFO"
