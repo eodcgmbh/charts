@@ -136,6 +136,14 @@ spec:
             - name: OIDC_CUSTOMER_CLAIM
               value: {{ .Values.global.env.oidcCustomerClaim | quote }}
             {{- end }}
+            {{- if .Values.global.env.meteringCustomerLabel }}
+            - name: METERING_CUSTOMER_LABEL
+              value: {{ .Values.global.env.meteringCustomerLabel | quote }}
+            {{- end }}
+            {{- if .Values.global.env.meteringProjectLabel }}
+            - name: METERING_PROJECT_LABEL
+              value: {{ .Values.global.env.meteringProjectLabel | quote }}
+            {{- end }}
             {{- if .Values.global.env.meteringProject }}
             - name: METERING_PROJECT
               value: {{ .Values.global.env.meteringProject | quote }}
@@ -273,6 +281,14 @@ spec:
             {{- if .Values.global.env.oidcCustomerClaim }}
             - name: OIDC_CUSTOMER_CLAIM
               value: {{ .Values.global.env.oidcCustomerClaim | quote }}
+            {{- end }}
+            {{- if .Values.global.env.meteringCustomerLabel }}
+            - name: METERING_CUSTOMER_LABEL
+              value: {{ .Values.global.env.meteringCustomerLabel | quote }}
+            {{- end }}
+            {{- if .Values.global.env.meteringProjectLabel }}
+            - name: METERING_PROJECT_LABEL
+              value: {{ .Values.global.env.meteringProjectLabel | quote }}
             {{- end }}
             {{- if .Values.global.env.meteringProject }}
             - name: METERING_PROJECT
