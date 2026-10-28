@@ -38,8 +38,13 @@ microk8s helm upgrade --install openeo -n test -f values.yaml .
 | global.env.oidcPolicies       | Policies for OpenID Connect authorization             |    ""  |
 | global.env.oidcProviderTitle  | Display title of the OIDC provider                    |  "EGI Check-in"  |
 | global.env.oidcClientId       | Client ID registered with the OIDC provider           |  "openeo-platform-default-client"  |
+| global.env.oidcCustomerClaim  | Userinfo claim (dot-separated path) used as the `eodc.eu/customer` label on job workflows and dask pods, with `@` written as `_at_`. When set, users without this claim cannot start jobs. |  ""  |
+| global.env.meteringProject    | Value of the `eodc.eu/project` label on job workflows and dask pods. Empty omits the label. |  ""  |
 | global.env.stacCatalogueUrl   | URL for a single STAC catalogue. Always set, and required by the API even when stacCatalogueUrls is used  |   "https://stac.eodc.eu/api/v1"    |
 | global.env.stacCatalogueUrls  | URLs of the STAC catalogues to proxy. Their collections are combined, deduplicated by id keeping the first match, and then filtered by stacCollectionsWhitelist. Takes precedence over stacCatalogueUrl  |   []    |
+| global.env.stacCollectionsWhitelist | STAC collection ids served by the API. Empty serves all. Ignored when whitelistConfigMap is set. |   []    |
+| global.env.processWhitelist   | openEO process ids offered by the API and executor. Empty offers all. Ignored when whitelistConfigMap is set. |   []    |
+| global.env.whitelistConfigMap | Name of an existing ConfigMap providing the whitelists as comma-separated ids under the keys `STAC_COLLECTIONS_WHITELIST` and `OPENEO_PROCESS_WHITELIST`, both required. The chart does not create it, and pods must be restarted to pick up changes. |   ""    |
 | global.env.workspaceRoot      | Root directory for user workspaces                    |   "/user_workspaces/jobs"    |
 | global.env.workspaceMount      | The mount path for the volume where the user workspaces are stored  |   "/user_workspaces"    |
 | global.env.executorImage      | Image for the executor                                |   "ghcr.io/eodcgmbh/openeo-argoworkflows:executor-2026.3.4"    |
