@@ -132,6 +132,14 @@ spec:
             - name: OIDC_ROLES_CLAIM
               value: {{ .Values.global.env.oidcRolesClaim | quote }}
             {{- end }}
+            {{- if .Values.global.env.oidcCustomerClaim }}
+            - name: OIDC_CUSTOMER_CLAIM
+              value: {{ .Values.global.env.oidcCustomerClaim | quote }}
+            {{- end }}
+            {{- if .Values.global.env.meteringProject }}
+            - name: METERING_PROJECT
+              value: {{ .Values.global.env.meteringProject | quote }}
+            {{- end }}
             {{- /* Always set STAC_API_URL: openeo-fastapi's OpenEOCore discards the
                    injected settings for a bare AppSettings(), which has no
                    STAC_API_URLS field and treats STAC_API_URL as required. */}}
@@ -141,6 +149,18 @@ spec:
             - name: STAC_API_URLS
               value: {{ join "," .Values.global.env.stacCatalogueUrls | quote }}
             {{- end }}
+            {{- if .Values.global.env.whitelistConfigMap }}
+            - name: STAC_COLLECTIONS_WHITELIST
+              valueFrom:
+                configMapKeyRef:
+                  name: {{ .Values.global.env.whitelistConfigMap | quote }}
+                  key: STAC_COLLECTIONS_WHITELIST
+            - name: OPENEO_PROCESS_WHITELIST
+              valueFrom:
+                configMapKeyRef:
+                  name: {{ .Values.global.env.whitelistConfigMap | quote }}
+                  key: OPENEO_PROCESS_WHITELIST
+            {{- else }}
             {{- if .Values.global.env.stacCollectionsWhitelist }}
             - name: STAC_COLLECTIONS_WHITELIST
               value: {{ join "," .Values.global.env.stacCollectionsWhitelist | quote }}
@@ -148,6 +168,7 @@ spec:
             {{- if .Values.global.env.processWhitelist }}
             - name: OPENEO_PROCESS_WHITELIST
               value: {{ join "," .Values.global.env.processWhitelist | quote }}
+            {{- end }}
             {{- end }}
             - name: ARGO_WORKFLOWS_SERVER
               value: {{ if .Values.argoworkflows.enabled }}"http://openeo-argo-workflows-server.{{ .Release.Namespace }}.svc.cluster.local:2746"{{ else }}"{{ .Values.argoworkflows.server }}"{{ end }}
@@ -249,6 +270,14 @@ spec:
             - name: OIDC_ROLES_CLAIM
               value: {{ .Values.global.env.oidcRolesClaim | quote }}
             {{- end }}
+            {{- if .Values.global.env.oidcCustomerClaim }}
+            - name: OIDC_CUSTOMER_CLAIM
+              value: {{ .Values.global.env.oidcCustomerClaim | quote }}
+            {{- end }}
+            {{- if .Values.global.env.meteringProject }}
+            - name: METERING_PROJECT
+              value: {{ .Values.global.env.meteringProject | quote }}
+            {{- end }}
             {{- /* Always set STAC_API_URL: openeo-fastapi's OpenEOCore discards the
                    injected settings for a bare AppSettings(), which has no
                    STAC_API_URLS field and treats STAC_API_URL as required. */}}
@@ -260,7 +289,13 @@ spec:
             {{- end }}
             {{- /* The queue worker validates graphs and forwards this to the
                    executor pod, so it needs the whitelist too. */}}
-            {{- if .Values.global.env.processWhitelist }}
+            {{- if .Values.global.env.whitelistConfigMap }}
+            - name: OPENEO_PROCESS_WHITELIST
+              valueFrom:
+                configMapKeyRef:
+                  name: {{ .Values.global.env.whitelistConfigMap | quote }}
+                  key: OPENEO_PROCESS_WHITELIST
+            {{- else if .Values.global.env.processWhitelist }}
             - name: OPENEO_PROCESS_WHITELIST
               value: {{ join "," .Values.global.env.processWhitelist | quote }}
             {{- end }}

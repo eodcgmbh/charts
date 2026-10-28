@@ -14,10 +14,16 @@ global:
     oidcProviderTitle: "EGI Check-in"
     oidcClientId: "openeo-platform-default-client"
     oidcRolesClaim: ""
+    oidcCustomerClaim: ""
+    meteringProject: ""
     stacCatalogueUrl: "https://stac.eodc.eu/api/v1"
     stacCatalogueUrls: []
     stacCollectionsWhitelist: []
     processWhitelist: []
+    # Existing ConfigMap with STAC_COLLECTIONS_WHITELIST and
+    # OPENEO_PROCESS_WHITELIST keys (comma-separated ids). Replaces the two
+    # lists above; pods must be restarted to pick up changes to it.
+    whitelistConfigMap: ""
     workspaceRoot: "/user_workspace/jobs"
     workspaceMount: &workspaceMount "/user_workspace"
     executorImage: "ghcr.io/eodcgmbh/openeo-argoworkflows:executor-2026.5.6"
@@ -265,11 +271,16 @@ dask-gateway:
       optionHandler: |
         from dask_gateway_server.options import Options, Integer, Float, String
         def option_handler(options):
+          labels = {'OPENEO_USER_ID': options.OPENEO_USER_ID, 'OPENEO_JOB_ID': options.OPENEO_JOB_ID }
+          if options.OPENEO_CUSTOMER:
+            labels['eodc.eu/customer'] = options.OPENEO_CUSTOMER
+          if options.OPENEO_PROJECT:
+            labels['eodc.eu/project'] = options.OPENEO_PROJECT
           return {
               "worker_cores": options.WORKER_CORES,
               "worker_memory": int(options.WORKER_MEMORY_GIB * 2**30),
-              "scheduler_extra_pod_labels": {'OPENEO_USER_ID': options.OPENEO_USER_ID, 'OPENEO_JOB_ID': options.OPENEO_JOB_ID },
-              "worker_extra_pod_labels": {'OPENEO_USER_ID': options.OPENEO_USER_ID, 'OPENEO_JOB_ID': options.OPENEO_JOB_ID },
+              "scheduler_extra_pod_labels": labels,
+              "worker_extra_pod_labels": labels,
               "idle_timeout": options.CLUSTER_IDLE_TIMEOUT,
               "image": options.IMAGE
           }
@@ -279,6 +290,8 @@ dask-gateway:
             Float("WORKER_MEMORY_GIB", 12, min=1, max=48, label="Worker memory (GiB)"),
             String("OPENEO_USER_ID", "Unassigned", label="User identifier"),
             String("OPENEO_JOB_ID", "Unassigned", label="Job identifier"),
+            String("OPENEO_CUSTOMER", "", label="Metering customer"),
+            String("OPENEO_PROJECT", "", label="Metering project"),
             Float("CLUSTER_IDLE_TIMEOUT", 3600, label="Idle Timeout"),
             String("IMAGE", "ghcr.io/dask/dask-gateway:2024.1.0", label="Worker image"),
             handler=option_handler,
