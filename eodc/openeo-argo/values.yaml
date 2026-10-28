@@ -15,6 +15,10 @@ global:
     oidcClientId: "openeo-platform-default-client"
     oidcRolesClaim: ""
     oidcCustomerClaim: ""
+    # Label keys put on job workflows and dask pods for metering. A key left
+    # empty omits that label.
+    meteringCustomerLabel: ""
+    meteringProjectLabel: ""
     meteringProject: ""
     stacCatalogueUrl: "https://stac.eodc.eu/api/v1"
     stacCatalogueUrls: []
@@ -269,13 +273,10 @@ dask-gateway:
 
     extraConfig: 
       optionHandler: |
+        import json
         from dask_gateway_server.options import Options, Integer, Float, String
         def option_handler(options):
-          labels = {'OPENEO_USER_ID': options.OPENEO_USER_ID, 'OPENEO_JOB_ID': options.OPENEO_JOB_ID }
-          if options.OPENEO_CUSTOMER:
-            labels['eodc.eu/customer'] = options.OPENEO_CUSTOMER
-          if options.OPENEO_PROJECT:
-            labels['eodc.eu/project'] = options.OPENEO_PROJECT
+          labels = {**json.loads(options.OPENEO_POD_LABELS), 'OPENEO_USER_ID': options.OPENEO_USER_ID, 'OPENEO_JOB_ID': options.OPENEO_JOB_ID }
           return {
               "worker_cores": options.WORKER_CORES,
               "worker_memory": int(options.WORKER_MEMORY_GIB * 2**30),
@@ -290,8 +291,7 @@ dask-gateway:
             Float("WORKER_MEMORY_GIB", 12, min=1, max=48, label="Worker memory (GiB)"),
             String("OPENEO_USER_ID", "Unassigned", label="User identifier"),
             String("OPENEO_JOB_ID", "Unassigned", label="Job identifier"),
-            String("OPENEO_CUSTOMER", "", label="Metering customer"),
-            String("OPENEO_PROJECT", "", label="Metering project"),
+            String("OPENEO_POD_LABELS", "{}", label="Extra pod labels (JSON)"),
             Float("CLUSTER_IDLE_TIMEOUT", 3600, label="Idle Timeout"),
             String("IMAGE", "ghcr.io/dask/dask-gateway:2024.1.0", label="Worker image"),
             handler=option_handler,
