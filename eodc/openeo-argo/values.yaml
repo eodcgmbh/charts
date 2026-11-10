@@ -15,18 +15,15 @@ global:
     oidcClientId: "openeo-platform-default-client"
     oidcRolesClaim: ""
     oidcCustomerClaim: ""
-    # Label keys put on job workflows and dask pods for metering. A key left
-    # empty omits that label.
     meteringCustomerLabel: ""
     meteringProjectLabel: ""
     meteringProject: ""
+    openmeterUrl: ""
+    openmeterFeature: ""
     stacCatalogueUrl: "https://stac.eodc.eu/api/v1"
     stacCatalogueUrls: []
     stacCollectionsWhitelist: []
     processWhitelist: []
-    # Existing ConfigMap with STAC_COLLECTIONS_WHITELIST and
-    # OPENEO_PROCESS_WHITELIST keys (comma-separated ids). Replaces the two
-    # lists above; pods must be restarted to pick up changes to it.
     whitelistConfigMap: ""
     workspaceRoot: "/user_workspace/jobs"
     workspaceMount: &workspaceMount "/user_workspace"
@@ -45,18 +42,12 @@ global:
       name: ""
       usernameKey: "username"
       passwordKey: "secret"
-    # AWS / Icechunk store access, forwarded to the executor.
     awsDefaultRegion: "us-east-1"
     awsEndpointUrl: ""
-    # EODAG access via DESP, forwarded to the executor.
     eodagDedlPriority: "10"
-    # Icechunk S3 timeout settings (in milliseconds), forwarded to the executor.
     icechunkS3ConnectTimeoutMs: "15000"
     icechunkS3OperationAttemptTimeoutMs: "30000"
     icechunkS3OperationTimeoutMs: "120000"
-    # Existing secret holding the sensitive executor credentials (AWS keys and
-    # EODAG login). Leave name empty to disable; the chart references this
-    # secret, it does not create it.
     executorSecret:
       name: ""
       awsAccessKeyIdKey: "aws-access-key-id"
