@@ -148,6 +148,12 @@ spec:
             - name: METERING_PROJECT
               value: {{ .Values.global.env.meteringProject | quote }}
             {{- end }}
+            {{- if .Values.global.env.openmeterUrl }}
+            - name: OPENMETER_URL
+              value: {{ .Values.global.env.openmeterUrl | quote }}
+            - name: OPENMETER_FEATURE
+              value: {{ .Values.global.env.openmeterFeature | quote }}
+            {{- end }}
             {{- /* Always set STAC_API_URL: openeo-fastapi's OpenEOCore discards the
                    injected settings for a bare AppSettings(), which has no
                    STAC_API_URLS field and treats STAC_API_URL as required. */}}
