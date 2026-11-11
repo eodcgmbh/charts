@@ -1,0 +1,38 @@
+image:
+  repository: registry.eodc.eu/eodc/eodc-api/fastgeoapi
+  tag: "0.4.0"
+  pullPolicy: IfNotPresent
+imagePullSecrets: []
+
+replicas: 1
+workers: 4
+contextPath: /geoapi
+baseUrl: ""
+logLevel: error
+
+postgres:
+  secretName: postgres-credentials
+  secretKey: postgresPassword
+
+config:
+  data: ""
+
+httpRoute:
+  hostnames: []
+  pathPrefix: /
+  parentRefs: []
+
+resources: {}
+
+# Authorisation with OPA (fastgeoapi's built-in OPA mode, OPA as sidecar)
+opa:
+  enabled: false
+  image: openpolicyagent/opa:1.22.0
+  collectionGroups: {}
+  publicPaths: []
+
+# Keycloak client used by fastgeoapi in OPA mode
+oidc:
+  wellKnownEndpoint: ""
+  clientId: ""
+  clientSecretName: ""
