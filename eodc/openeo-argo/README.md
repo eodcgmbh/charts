@@ -42,8 +42,8 @@ microk8s helm upgrade --install openeo -n test -f values.yaml .
 | global.env.meteringCustomerLabel | Label key carrying the customer on job workflows and dask pods, e.g. `eodc.eu/customer`. Requires oidcCustomerClaim; users without that claim cannot start jobs. Empty omits the label. |  ""  |
 | global.env.meteringProjectLabel | Label key carrying `meteringProject` on job workflows and dask pods, e.g. `eodc.eu/project`. Empty omits the label. |  ""  |
 | global.env.meteringProject    | Value of the `meteringProjectLabel` label. Required when meteringProjectLabel is set. |  ""  |
-| global.env.openmeterUrl       | OpenMeter API URL. When set, batch and sync jobs of users with an OpenMeter customer (found by the `meteringCustomerLabel` value as subject) are refused with 403 unless it has access to `openmeterFeature`, and with 503 if that cannot be checked. Users without a customer, or whose customer lookup fails, are not checked. |  ""  |
-| global.env.openmeterFeature   | OpenMeter feature key checked for access. Required when openmeterUrl is set. |  ""  |
+| global.env.openmeterUrl       | OpenMeter API URL. When set, batch and sync jobs of users with an OpenMeter customer (found by the `meteringCustomerLabel` value as subject) are refused with 403 unless it has access to every feature in `openmeterFeature`, and with 503 if that cannot be checked. Users without a customer, or whose customer lookup fails, are not checked. |  ""  |
+| global.env.openmeterFeature   | Comma-separated OpenMeter feature keys that all need access. Required when openmeterUrl is set. |  ""  |
 | global.env.stacCatalogueUrl   | URL for a single STAC catalogue. Always set, and required by the API even when stacCatalogueUrls is used  |   "https://stac.eodc.eu/api/v1"    |
 | global.env.stacCatalogueUrls  | URLs of the STAC catalogues to proxy. Their collections are combined, deduplicated by id keeping the first match, and then filtered by stacCollectionsWhitelist. Takes precedence over stacCatalogueUrl  |   []    |
 | global.env.stacCollectionsWhitelist | STAC collection ids served by the API. Empty serves all. Ignored when whitelistConfigMap is set. |   []    |
