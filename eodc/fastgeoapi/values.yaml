@@ -14,13 +14,13 @@ postgres:
   secretName: postgres-credentials
   secretKey: postgresPassword
 
+s3:
+  secretName: ""
+  accessKeyIdKey: AWS_ACCESS_KEY_ID
+  secretAccessKeyKey: AWS_SECRET_ACCESS_KEY
+
 config:
   data: ""
-
-httpRoute:
-  hostnames: []
-  pathPrefix: /
-  parentRefs: []
 
 resources: {}
 
