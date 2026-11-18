@@ -1,0 +1,123 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ .Release.Name }}
+  labels:
+    app.kubernetes.io/name: fastgeoapi
+    app.kubernetes.io/instance: {{ .Release.Name }}
+spec:
+  replicas: {{ .Values.replicas }}
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: fastgeoapi
+      app.kubernetes.io/instance: {{ .Release.Name }}
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: fastgeoapi
+        app.kubernetes.io/instance: {{ .Release.Name }}
+      annotations:
+        checksum/config: {{ .Values.config.data | sha256sum }}
+        checksum/auth: {{ printf "%v%v%v%v" .Values.opa.enabled .Values.opa.publicPaths .Values.opa.collectionGroups .Values.oidc | sha256sum }}
+    spec:
+      {{- with .Values.imagePullSecrets }}
+      imagePullSecrets:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      containers:
+        - name: fastgeoapi
+          image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          ports:
+            - name: http
+              containerPort: 8000
+          env:
+            - { name: ENV_STATE, value: dev }
+            - { name: HOST, value: "0.0.0.0" }
+            - { name: PORT, value: "8000" }
+            - { name: WORKERS, value: {{ .Values.workers | quote }} }
+            - { name: PYGEOAPI_CONFIG, value: /config/pygeoapi-config.yml }
+            - { name: PYGEOAPI_OPENAPI, value: /tmp/pygeoapi-openapi.yml }
+            - { name: DEV_PYGEOAPI_CONFIG, value: /config/pygeoapi-config.yml }
+            - { name: DEV_PYGEOAPI_OPENAPI, value: /tmp/pygeoapi-openapi.yml }
+            - { name: DEV_PYGEOAPI_BASEURL, value: {{ required "baseUrl is required" .Values.baseUrl | quote }} }
+            - { name: DEV_FASTGEOAPI_CONTEXT, value: {{ .Values.contextPath | quote }} }
+            - { name: DEV_ROOT_PATH, value: "" }
+            - { name: DEV_LOG_PATH, value: /tmp }
+            - { name: DEV_LOG_FILENAME, value: fastgeoapi.log }
+            - { name: DEV_LOG_LEVEL, value: {{ .Values.logLevel | quote }} }
+            - { name: DEV_LOG_ENQUEUE, value: "true" }
+            - { name: DEV_LOG_ROTATION, value: "1 days" }
+            - { name: DEV_LOG_RETENTION, value: "1 weeks" }
+            - { name: DEV_JWKS_ENABLED, value: "false" }
+            - { name: DEV_API_KEY_ENABLED, value: "false" }
+            {{- if .Values.opa.enabled }}
+            - { name: DEV_OPA_ENABLED, value: "true" }
+            - { name: DEV_OPA_URL, value: "http://localhost:8181" }
+            - { name: DEV_APP_URI, value: {{ .Values.baseUrl | quote }} }
+            - { name: DEV_OIDC_WELL_KNOWN_ENDPOINT, value: {{ required "oidc.wellKnownEndpoint is required with opa.enabled" .Values.oidc.wellKnownEndpoint | quote }} }
+            - { name: DEV_OIDC_CLIENT_ID, value: {{ required "oidc.clientId is required with opa.enabled" .Values.oidc.clientId | quote }} }
+            {{- if .Values.oidc.clientSecretName }}
+            - name: DEV_OIDC_CLIENT_SECRET
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.oidc.clientSecretName }}
+                  key: client-secret
+            {{- end }}
+            - { name: FASTGEOAPI_SKIP_ENDPOINTS, value: {{ required "opa.publicPaths is required with opa.enabled (include the probe path)" .Values.opa.publicPaths | toJson | quote }} }
+            {{- else }}
+            - { name: DEV_OPA_ENABLED, value: "false" }
+            {{- end }}
+            - name: POSTGRES_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.postgres.secretName }}
+                  key: {{ .Values.postgres.secretKey }}
+          volumeMounts:
+            - name: config
+              mountPath: /config
+              readOnly: true
+          startupProbe:
+            httpGet:
+              path: {{ .Values.contextPath }}/conformance?f=json
+              port: http
+            periodSeconds: 5
+            failureThreshold: 36
+          readinessProbe:
+            httpGet:
+              path: {{ .Values.contextPath }}/conformance?f=json
+              port: http
+            periodSeconds: 10
+          livenessProbe:
+            httpGet:
+              path: {{ .Values.contextPath }}/conformance?f=json
+              port: http
+            periodSeconds: 30
+            timeoutSeconds: 5
+          resources:
+            {{- toYaml .Values.resources | nindent 12 }}
+        {{- if .Values.opa.enabled }}
+        - name: opa
+          image: {{ .Values.opa.image }}
+          args:
+            - run
+            - --server
+            - --addr=127.0.0.1:8181
+            - --watch
+            - --ignore=.*
+            - --set=decision_logs.console=true
+            - /policy
+          volumeMounts:
+            - name: opa-policy
+              mountPath: /policy
+              readOnly: true
+        {{- end }}
+      volumes:
+        - name: config
+          configMap:
+            name: {{ .Release.Name }}-config
+        {{- if .Values.opa.enabled }}
+        - name: opa-policy
+          configMap:
+            name: {{ .Release.Name }}-opa-policy
+        {{- end }}

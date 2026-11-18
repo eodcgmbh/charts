@@ -1,0 +1,50 @@
+{{- if .Values.opa.enabled }}
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ .Release.Name }}-opa-policy
+  labels:
+    app.kubernetes.io/name: fastgeoapi
+    app.kubernetes.io/instance: {{ .Release.Name }}
+data:
+  data.json: |
+    {{ dict "collection_groups" .Values.opa.collectionGroups | toJson }}
+  authz.rego: |
+    package httpapi.authz
+
+    import rego.v1
+
+
+    default allow := false
+
+    collection := c if {
+    	some i
+    	input.request_path[i] == "collections"
+    	c := input.request_path[i + 1]
+    }
+
+    required_group := data.collection_groups[collection]
+
+    protected if required_group
+    protected if startswith(collection, "prv_")
+
+    member_of(g) if g in input.groups
+
+    read if input.request_method == "GET"
+
+    read if {
+    	input.request_method == "POST"
+    	input.request_path[count(input.request_path) - 1] == "items"
+    }
+
+    allow if {
+    	read
+    	not protected
+    }
+
+    allow if {
+    	read
+    	protected
+    	member_of(required_group)
+    }
+{{- end }}
