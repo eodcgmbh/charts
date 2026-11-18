@@ -366,6 +366,17 @@ entries:
     urls:
     - eodag-server-0.1.0.tgz
     version: 0.1.0
+  fastgeoapi:
+  - apiVersion: v2
+    appVersion: 0.4.0
+    created: "2026-11-18T09:40:07.85973151Z"
+    description: fastgeoapi (FastAPI wrapper around pygeoapi)
+    digest: 4c335d0fd5747d64a1c2d0cf40d58c9182194c9d9dc99ce51c16293e5479ce88
+    name: fastgeoapi
+    type: application
+    urls:
+    - fastgeoapi-0.1.0.tgz
+    version: 0.1.0
   greenforce:
   - apiVersion: v2
     appVersion: latest
@@ -2047,4 +2058,4 @@ entries:
     urls:
     - zarr-browser-2026.5.1.tgz
     version: 2026.5.1
-generated: "2026-11-10T14:12:19.040825909Z"
+generated: "2026-11-18T09:40:08.168072608Z"
