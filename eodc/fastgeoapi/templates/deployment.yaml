@@ -73,6 +73,18 @@ spec:
                 secretKeyRef:
                   name: {{ .Values.postgres.secretName }}
                   key: {{ .Values.postgres.secretKey }}
+            {{- if .Values.s3.secretName }}
+            - name: AWS_ACCESS_KEY_ID
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.s3.secretName }}
+                  key: {{ .Values.s3.accessKeyIdKey }}
+            - name: AWS_SECRET_ACCESS_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.s3.secretName }}
+                  key: {{ .Values.s3.secretAccessKeyKey }}
+            {{- end }}
           volumeMounts:
             - name: config
               mountPath: /config
