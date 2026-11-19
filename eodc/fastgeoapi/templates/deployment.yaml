@@ -68,12 +68,6 @@ spec:
             {{- else }}
             - { name: DEV_OPA_ENABLED, value: "false" }
             {{- end }}
-            - name: POSTGRES_PASSWORD
-              valueFrom:
-                secretKeyRef:
-                  name: {{ .Values.postgres.secretName }}
-                  key: {{ .Values.postgres.secretKey }}
-            {{- if .Values.s3.secretName }}
             - name: AWS_ACCESS_KEY_ID
               valueFrom:
                 secretKeyRef:
