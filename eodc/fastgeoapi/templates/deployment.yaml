@@ -78,7 +78,6 @@ spec:
                 secretKeyRef:
                   name: {{ .Values.s3.secretName }}
                   key: {{ .Values.s3.secretAccessKeyKey }}
-            {{- end }}
           volumeMounts:
             - name: config
               mountPath: /config
