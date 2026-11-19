@@ -10,10 +10,6 @@ contextPath: /geoapi
 baseUrl: ""
 logLevel: error
 
-postgres:
-  secretName: postgres-credentials
-  secretKey: postgresPassword
-
 s3:
   secretName: ""
   accessKeyIdKey: AWS_ACCESS_KEY_ID
