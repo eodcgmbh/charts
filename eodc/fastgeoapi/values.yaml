@@ -10,6 +10,17 @@ contextPath: /geoapi
 baseUrl: ""
 logLevel: error
 
+httpRoute:
+  parentRefs:
+    - group: gateway.networking.k8s.io
+      kind: ListenerSet
+      name: extra-listeners
+      namespace: envoy-gateway-system
+      sectionName: fastgeoapi-https
+  hostnames:
+    - geoapi.discovery.eodc.eu
+  pathPrefix: /features
+
 s3:
   secretName: ""
   accessKeyIdKey: AWS_ACCESS_KEY_ID
