@@ -14,7 +14,7 @@ httpRoute:
   parentRefs:
     - group: gateway.networking.k8s.io
       kind: ListenerSet
-      name: extra-listeners
+      name: cluster-listeners
       namespace: envoy-gateway-system
       sectionName: fastgeoapi-https
   hostnames:
