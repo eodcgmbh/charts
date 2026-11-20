@@ -1,0 +1,24 @@
+apiVersion: gateway.envoyproxy.io/v1alpha1
+kind: BackendTrafficPolicy
+metadata:
+  name: eodag-timeout-response
+  namespace: eodag-server
+spec:
+  targetRefs:
+    - group: gateway.networking.k8s.io
+      kind: HTTPRoute
+      name: eodag-route
+  responseOverride:
+    - match:
+        statusCodes:
+          - type: Value
+            value: 504
+      response:
+        contentType: application/json
+        body:
+          type: Inline
+          inline: |
+            {"code": "GatewayTimeout", "description": "The search took longer than 120 seconds. Try narrowing your request with a smaller bbox, shorter temporal period or a smaller page token."}
+  circuitBreaker:
+    maxParallelRequests: 40
+    maxPendingRequests: 20
