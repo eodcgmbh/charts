@@ -704,3 +704,8 @@ autoscaling:
   maxReplicas: 10
   targetCPU: ""
   targetMemory: ""
+
+timeoutResponse:
+  enabled: true
+  routeName: eodag-route
+  body: '{"code": "GatewayTimeout", "description": "The search took longer than 120 seconds. Try narrowing your request with a smaller bbox, shorter temporal period or a smaller page token."}'
