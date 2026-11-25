@@ -1,5 +1,7 @@
 {{- $tr := .Values.timeoutResponse | default dict }}
 {{- if and $tr.enabled (.Capabilities.APIVersions.Has "gateway.envoyproxy.io/v1alpha1/BackendTrafficPolicy") }}
+{{- $timeout := $tr.requestTimeout | default "120s" }}
+{{- $description := $tr.description | default (printf "The search took longer than %s. Try narrowing your request with a smaller bbox, shorter temporal period or a smaller page token." $timeout) }}
 apiVersion: gateway.envoyproxy.io/v1alpha1
 kind: BackendTrafficPolicy
 metadata:
@@ -17,6 +19,9 @@ spec:
     - group: gateway.networking.k8s.io
       kind: HTTPRoute
       name: {{ required "timeoutResponse.routeName is required when timeoutResponse.enabled is true" $tr.routeName }}
+  timeout:
+    http:
+      requestTimeout: {{ $timeout }}
   responseOverride:
     - match:
         statusCodes:
@@ -26,7 +31,7 @@ spec:
         contentType: application/json
         body:
           type: Inline
-          inline: {{ $tr.body | default "{\"code\": \"GatewayTimeout\", \"description\": \"The request took too long to complete.\"}" | toJson }}
+          inline: {{ dict "code" "GatewayTimeout" "description" $description | toJson | toJson }}
   {{- with $tr.circuitBreaker }}
   circuitBreaker: {{- toYaml . | nindent 4 }}
   {{- end }}
