@@ -1,4 +1,5 @@
-{{- if and .Values.timeoutResponse.enabled (.Capabilities.APIVersions.Has "gateway.envoyproxy.io/v1alpha1/BackendTrafficPolicy") }}
+{{- $tr := .Values.timeoutResponse | default dict }}
+{{- if and $tr.enabled (.Capabilities.APIVersions.Has "gateway.envoyproxy.io/v1alpha1/BackendTrafficPolicy") }}
 apiVersion: gateway.envoyproxy.io/v1alpha1
 kind: BackendTrafficPolicy
 metadata:
@@ -15,7 +16,7 @@ spec:
   targetRefs:
     - group: gateway.networking.k8s.io
       kind: HTTPRoute
-      name: {{ .Values.timeoutResponse.routeName }}
+      name: {{ required "timeoutResponse.routeName is required when timeoutResponse.enabled is true" $tr.routeName }}
   responseOverride:
     - match:
         statusCodes:
@@ -25,8 +26,8 @@ spec:
         contentType: application/json
         body:
           type: Inline
-          inline: {{ .Values.timeoutResponse.body | toJson }}
-  circuitBreaker:
-    maxParallelRequests: 40
-    maxPendingRequests: 20
+          inline: {{ $tr.body | default "{\"code\": \"GatewayTimeout\", \"description\": \"The request took too long to complete.\"}" | toJson }}
+  {{- with $tr.circuitBreaker }}
+  circuitBreaker: {{- toYaml . | nindent 4 }}
+  {{- end }}
 {{- end }}
